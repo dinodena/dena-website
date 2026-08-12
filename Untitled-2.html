@@ -1,0 +1,909 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dena Attar — Engineer & Creative</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@100..800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0a0a0b;
+            --text-main: #f0f0ed;
+            --text-muted: #8a8a88;
+            --accent-warm: #d9aa75; /* A soft, sophisticated amber/gold */
+            --glass-bg: rgba(20, 20, 22, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            
+            --font-sans: 'Inter', sans-serif;
+            --font-serif: 'Instrument Serif', serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            overflow: hidden; 
+            overscroll-behavior: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::selection {
+            background: var(--accent-warm);
+            color: var(--bg-dark);
+        }
+
+        #webgl-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; pointer-events: none;
+        }
+
+        .top-nav {
+            position: fixed; top: 0; left: 0; width: 100%;
+            padding: 24px 40px; box-sizing: border-box;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 50; pointer-events: none;
+        }
+
+        .brand-name {
+            font-family: var(--font-serif);
+            font-size: 1.8rem;
+            font-style: italic;
+            pointer-events: auto;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .brand-name:hover { color: var(--accent-warm); }
+
+        .audio-deck {
+            pointer-events: auto;
+            display: flex; align-items: center; gap: 16px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px 8px 8px;
+            border-radius: 40px;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+        }
+        .audio-deck:hover { border-color: rgba(255, 255, 255, 0.2); }
+
+        .play-btn {
+            width: 36px; height: 36px;
+            background: var(--text-main);
+            border: none; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .play-btn:active { transform: scale(0.95); }
+        .play-btn svg { width: 14px; height: 14px; fill: var(--bg-dark); margin-left: 2px; }
+        .play-btn.playing svg { margin-left: 0; }
+
+        .track-info { display: flex; flex-direction: column; justify-content: center; }
+        .track-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem; color: var(--text-muted);
+            letter-spacing: 0.1em; text-transform: uppercase;
+        }
+        .track-name { font-size: 0.85rem; font-weight: 500; }
+        
+        .visualizer {
+            width: 40px; height: 16px;
+            display: flex; align-items: center; gap: 2px;
+            margin-left: 8px;
+        }
+        .visualizer-bar {
+            width: 3px; height: 2px;
+            background: var(--accent-warm);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+        }
+
+        .nav-links {
+            pointer-events: auto;
+            display: flex; gap: 24px;
+            font-size: 0.9rem; font-weight: 400;
+        }
+        .nav-links a { color: var(--text-main); text-decoration: none; transition: color 0.3s ease; }
+        .nav-links a:hover { color: var(--accent-warm); }
+
+        .telemetry-dock {
+            position: fixed; bottom: 40px; left: 40px;
+            pointer-events: none; z-index: 20;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .tel-item {
+            display: flex; align-items: center; gap: 12px;
+            font-family: var(--font-mono); font-size: 0.75rem;
+            color: var(--text-muted); letter-spacing: 0.05em;
+        }
+        .tel-value { color: var(--text-main); }
+        .tel-indicator {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #2ecc71;
+            box-shadow: 0 0 8px rgba(46, 204, 113, 0.6);
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+        }
+
+        .planet-label {
+            position: absolute; top: 0; left: 0;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 6px 12px; border-radius: 20px;
+            color: var(--text-main);
+            font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em;
+            text-transform: uppercase; pointer-events: none;
+            opacity: 0; backdrop-filter: blur(8px);
+            transition: opacity 0.3s ease, border-color 0.3s ease;
+        }
+
+        .back-btn {
+            position: fixed; top: 100px; left: 40px;
+            background: transparent; border: 1px solid var(--glass-border);
+            color: var(--text-muted); padding: 8px 16px; border-radius: 20px;
+            font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase;
+            cursor: pointer; transition: all 0.3s ease; z-index: 60;
+            display: none; opacity: 0; pointer-events: auto; backdrop-filter: blur(8px);
+        }
+        .back-btn:hover { color: var(--text-main); border-color: var(--text-main); }
+
+        #home-scroll-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            overflow-y: auto; overflow-x: hidden; z-index: 5;
+            scrollbar-width: none; 
+        }
+        #home-scroll-container::-webkit-scrollbar { display: none; } 
+
+        .home-hero {
+            position: relative; width: 100%; height: 100vh;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            pointer-events: none; 
+        }
+
+        .huge-title {
+            font-family: var(--font-serif);
+            font-size: clamp(6rem, 12vw, 15rem);
+            font-weight: 400; font-style: italic;
+            line-height: 0.9; margin: 0;
+            text-align: center; color: var(--text-main);
+            letter-spacing: -0.02em; pointer-events: auto;
+        }
+        .subtitle {
+            font-family: var(--font-mono);
+            font-size: 0.85rem; color: var(--text-muted);
+            letter-spacing: 0.15em; text-transform: uppercase;
+            margin-top: 24px; pointer-events: auto;
+        }
+
+        .explore-hint {
+            position: absolute; bottom: 40px; right: 40px;
+            font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
+            letter-spacing: 0.1em; pointer-events: none; text-align: right;
+        }
+
+        .home-spacer { height: 60vh; } 
+        .contact-section {
+            min-height: 100vh; display: flex; flex-direction: column; justify-content: flex-end;
+            padding: 8vw 5vw 4vw 5vw; pointer-events: auto; position: relative; z-index: 10;
+        }
+        .contact-header {
+            font-family: var(--font-serif); font-size: clamp(4rem, 8vw, 10rem);
+            font-weight: 400; font-style: italic; line-height: 0.9;
+            margin-bottom: 8vh; color: var(--text-main);
+        }
+        .contact-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px;
+            border-top: 1px solid var(--glass-border); padding-top: 40px;
+            font-family: var(--font-sans);
+        }
+        .contact-col span { display: block; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; }
+        .contact-col a, .contact-col p { color: var(--text-main); text-decoration: none; font-size: 1.1rem; margin: 0 0 8px 0; transition: color 0.3s; display: block; }
+        .contact-col a:hover { color: var(--accent-warm); }
+        .footer-bottom {
+            margin-top: 80px; display: flex; justify-content: space-between;
+            font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
+        }
+
+        #engineering-scroll-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            overflow-y: auto; overflow-x: hidden; z-index: 10; pointer-events: auto;
+            display: none; opacity: 0; scrollbar-width: none;
+        }
+        #engineering-scroll-container::-webkit-scrollbar { display: none; }
+        #eng-scroll-track { position: absolute; top: 0; left: 0; width: 100%; height: 600vh; z-index: 0; }
+
+        .eng-timeline-line {
+            position: fixed; left: 50%; top: 0; width: 1px; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0.15) 80%, rgba(255,255,255,0) 100%);
+            z-index: -1; transform: translateX(-50%); display: none;
+        }
+
+        .eng-section {
+            position: absolute; width: 40%; height: 100vh;
+            display: flex; flex-direction: column; justify-content: center; z-index: 2;
+        }
+        .eng-section.left-align { left: 5%; }
+        .eng-section.right-align { left: 55%; }
+
+        #eng-sec-intro { top: 0vh; }
+        #eng-sec-nasa { top: 100vh; }
+        #eng-sec-tesla { top: 200vh; }
+        #eng-sec-google { top: 300vh; }
+        #eng-sec-ge { top: 400vh; }
+        #eng-sec-school { top: 500vh; }
+
+        .eng-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 3rem; border-radius: 16px;
+            backdrop-filter: blur(20px);
+            transition: border-color 0.4s ease, transform 0.4s ease;
+        }
+        .eng-card:hover { border-color: rgba(255, 255, 255, 0.2); transform: translateY(-5px); }
+
+        .eng-tag {
+            font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-warm);
+            letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px; display: block;
+        }
+        .exp-header { margin-bottom: 24px; }
+        .exp-header h2 { font-family: var(--font-serif); font-size: 2.5rem; font-style: italic; margin: 0 0 4px 0; color: #fff; font-weight: 400; }
+        .exp-header h3 { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); margin: 0; text-transform: uppercase; letter-spacing: 0.05em; }
+        .eng-card p { color: #d0d0c8; line-height: 1.7; font-size: 1.05rem; font-weight: 300; }
+
+        /* Tech Stack List inside Intro */
+        .tech-list { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+        .tech-pill {
+            padding: 6px 14px; border: 1px solid var(--glass-border); border-radius: 20px;
+            font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-main);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        #music-scroll-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            overflow-y: auto; overflow-x: hidden; z-index: 10; pointer-events: auto;
+            display: none; opacity: 0; scrollbar-width: none; 
+        }
+        #music-scroll-container::-webkit-scrollbar { display: none; }
+        #music-scroll-track { position: absolute; top: 0; left: 0; width: 100%; height: 800vh; z-index: 0; }
+
+        .music-title-bg {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-family: var(--font-serif); font-size: 20vw; font-style: italic;
+            color: rgba(255, 255, 255, 0.02); z-index: 0; pointer-events: none; margin: 0;
+        }
+
+        .music-cards-viewport {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            perspective: 1000px; pointer-events: none; z-index: 1;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .music-cards-wrapper { position: relative; transform-style: preserve-3d; width: 0; height: 0; }
+        .music-card { position: absolute; top: -150px; left: -150px; width: 300px; cursor: pointer; pointer-events: auto; transform-origin: center center; }
+        
+        .album-cover { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .artist-name { margin-top: 1.5rem; font-family: var(--font-mono); font-size: 0.85rem; color: #fff; text-align: center; letter-spacing: 0.1em; text-transform: uppercase; }
+
+        #aboutme-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            overflow-y: auto; overflow-x: hidden; z-index: 10; pointer-events: auto;
+            display: none; opacity: 0; scrollbar-width: none;
+            background: var(--bg-dark); /* Solid background for readability */
+        }
+        #aboutme-container::-webkit-scrollbar { display: none; }
+
+        .aboutme-inner { max-width: 800px; margin: 0 auto; padding: 15vh 5%; }
+        .about-header { margin-bottom: 80px; }
+        .about-header h1 { font-family: var(--font-serif); font-size: 5rem; font-style: italic; font-weight: 400; margin: 0 0 20px 0; }
+        .about-header p { font-size: 1.2rem; color: var(--text-muted); line-height: 1.6; max-width: 600px; }
+
+        /* Zia Oh Inspired Prompt Lounge */
+        .prompt-lounge { display: flex; flex-direction: column; gap: 32px; }
+        .prompt-card {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 40px; border-radius: 16px;
+        }
+        .prompt-question { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-warm); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; display: block; }
+        .prompt-answer { font-size: 1.1rem; line-height: 1.7; color: var(--text-main); font-weight: 300; margin: 0; }
+
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-dark); z-index: 9999; display: flex;
+            justify-content: center; align-items: center; transition: opacity 1s ease;
+        }
+        .loading-text { font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.2em; text-transform: uppercase; animation: blink 1.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-text">Initializing Systems...</div>
+    </div>
+
+    <!-- Background 3D Canvas -->
+    <div id="webgl-container"></div>
+
+    <!-- Planet Hover Labels -->
+    <div id="planet-labels-container"></div>
+
+    <!-- Top Navigation & Audio Player -->
+    <nav class="top-nav">
+        <div class="brand-name" onclick="location.reload()">dena attar.</div>
+        
+        <div class="audio-deck" id="audio-deck">
+            <!-- Hidden audio element for actual music -->
+            <!-- Add your mp3 file here: <audio id="bg-audio" src="path/to/nujabes.mp3" loop></audio> -->
+            <audio id="bg-audio" loop></audio>
+            
+            <button class="play-btn" id="play-btn">
+                <!-- Play Icon -->
+                <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <!-- Pause Icon (Hidden initially) -->
+                <svg id="icon-pause" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </button>
+            <div class="track-info">
+                <span class="track-label">Soundroom Mode</span>
+                <span class="track-name">Studio Ambience</span>
+            </div>
+            <div class="visualizer" id="visualizer">
+                <div class="visualizer-bar"></div><div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div><div class="visualizer-bar"></div>
+                <div class="visualizer-bar"></div>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="#">Work</a>
+            <a href="#">About</a>
+        </div>
+    </nav>
+
+    <!-- Engineering Telemetry Dock -->
+    <div class="telemetry-dock">
+        <div class="tel-item"><span class="tel-label">LOC:</span><span class="tel-value">Earth / Florida</span></div>
+        <div class="tel-item"><span class="tel-label">LCL:</span><span class="tel-value" id="local-clock">00:00</span></div>
+        <div class="tel-item"><div class="tel-indicator"></div><span class="tel-value">Systems Online</span></div>
+    </div>
+
+    <button class="back-btn" id="back-btn">← Return to Orbit</button>
+
+    <!-- HOME SCREEN OVERLAY -->
+    <div id="home-scroll-container">
+        <div class="home-hero">
+            <h1 class="huge-title">dena attar</h1>
+            <div class="subtitle">Engineer · Developer · Creator</div>
+            <div class="explore-hint">Interact with the planetary system<br>to explore realms.</div>
+        </div>
+
+        <div class="home-spacer"></div>
+
+        <div class="contact-section">
+            <h2 class="contact-header">Let's build<br>something.</h2>
+            <div class="contact-grid">
+                <div class="contact-col">
+                    <span>Contact</span>
+                    <a href="mailto:hello@denaattar.com">hello@denaattar.com</a>
+                </div>
+                <div class="contact-col">
+                    <span>Socials</span>
+                    <a href="#">LinkedIn</a>
+                    <a href="#">Instagram</a>
+                </div>
+                <div class="contact-col">
+                    <span>Availability</span>
+                    <p>Open for full-time roles & freelance collaborations.</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 Dena Attar</span>
+                <span>System V2.0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ENGINEERING REALM TIMELINE -->
+    <div id="engineering-scroll-container">
+        <div id="eng-scroll-track"></div>
+        <div class="eng-timeline-line" id="eng-timeline-line"></div>
+        
+        <div class="eng-section left-align" id="eng-sec-intro">
+            <div class="eng-card" style="background: transparent; border: none; backdrop-filter: none; padding: 0;">
+                <span class="eng-tag">Systems & Software</span>
+                <div class="exp-header">
+                    <h2>Engineering</h2>
+                    <h3>Core Competencies</h3>
+                </div>
+                <p>Bridging the gap between hardware reliability and robust software architecture. From optimizing flight systems to building responsive web environments.</p>
+                <div class="tech-list">
+                    <span class="tech-pill">Python</span><span class="tech-pill">C++</span><span class="tech-pill">JavaScript</span>
+                    <span class="tech-pill">React</span><span class="tech-pill">Three.js</span><span class="tech-pill">Fluid Dynamics</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="eng-section right-align" id="eng-sec-nasa">
+            <div class="eng-card">
+                <span class="eng-tag">01 / Aerospace</span>
+                <div class="exp-header"><h2>NASA</h2><h3>Pathways Design Engineer</h3></div>
+                <p>Designed and verified fluid systems for vehicle purge. Using fluid modeling software, analyzed airflow dynamics within the vehicle to ensure thermal and pressure stability during launch sequences.</p>
+            </div>
+        </div>
+
+        <div class="eng-section left-align" id="eng-sec-tesla">
+            <div class="eng-card">
+                <span class="eng-tag">02 / Energy</span>
+                <div class="exp-header"><h2>Tesla</h2><h3>Cell Reliability Engineering</h3></div>
+                <p>Supported the development and testing of next-generation battery cells for Model 3 and Model Y. Analyzed thermal degradation and charge-cycle limits to maximize lifespan and safety.</p>
+            </div>
+        </div>
+
+        <div class="eng-section right-align" id="eng-sec-google">
+            <div class="eng-card">
+                <span class="eng-tag">03 / Consumer Hardware</span>
+                <div class="exp-header"><h2>Google</h2><h3>Hardware Reliability</h3></div>
+                <p>Worked on the Pixel Buds engineering team focusing on audio fidelity and hardware reliability. Developed automated testing suites to simulate extreme wear-and-tear.</p>
+            </div>
+        </div>
+
+        <div class="eng-section left-align" id="eng-sec-ge">
+            <div class="eng-card">
+                <span class="eng-tag">04 / IoT Devices</span>
+                <div class="exp-header"><h2>GE Appliances</h2><h3>Mechanical Engineering</h3></div>
+                <p>Engineered core functionalities for smart coffee machines. Improved brewing algorithms and enhanced IoT connectivity for remote appliance management.</p>
+            </div>
+        </div>
+        
+        <div class="eng-section right-align" id="eng-sec-school">
+            <div class="eng-card">
+                <span class="eng-tag">05 / Academic Research</span>
+                <div class="exp-header"><h2>UCF Robotics</h2><h3>Lead Engineer</h3></div>
+                <p>Designed and implemented autonomous navigation systems using SLAM algorithms in C++ and Python. Published research on efficiency metrics in neural networks.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MUSIC REALM -->
+    <div id="music-scroll-container">
+        <div id="music-scroll-track"></div>
+        <h1 class="music-title-bg">SOUND</h1>
+        <div class="music-cards-viewport">
+            <div class="music-cards-wrapper" id="music-cards-wrapper">
+                <!-- Albums populated by JS -->
+                <div class="music-card"><img src="https://placehold.co/400x400/222/888?text=Harry+Styles" class="album-cover"><div class="artist-name">Harry Styles</div></div>
+                <div class="music-card"><img src="https://placehold.co/400x400/222/888?text=BTS" class="album-cover"><div class="artist-name">BTS</div></div>
+                <div class="music-card"><img src="https://placehold.co/400x400/222/888?text=Adele" class="album-cover"><div class="artist-name">Adele</div></div>
+                <div class="music-card"><img src="https://placehold.co/400x400/222/888?text=Ariana+Grande" class="album-cover"><div class="artist-name">Ariana Grande</div></div>
+                <div class="music-card"><img src="https://placehold.co/400x400/222/888?text=Frank+Ocean" class="album-cover"><div class="artist-name">Frank Ocean</div></div>
+                <div class="music-card"><img src="https://placehold.co/400x400/222/888?text=Sabrina+Carpenter" class="album-cover"><div class="artist-name">Sabrina Carpenter</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABOUT ME (PROMPT LOUNGE) -->
+    <div id="aboutme-container">
+        <div class="aboutme-inner">
+            <div class="about-header">
+                <h1>Hi, I'm Dena.</h1>
+                <p>I am an engineer who enjoys turning complex mechanical problems into clear, thoughtful, and robust physical and digital experiences. My perspective is shaped by hands-on engineering across aerospace, energy, and consumer tech.</p>
+            </div>
+
+            <div class="prompt-lounge">
+                <div class="prompt-card">
+                    <span class="prompt-question">What bridges NASA fluid dynamics and Pixel Buds audio?</span>
+                    <p class="prompt-answer">At their core, both require an obsession with how invisible forces (air, sound, heat) interact with physical constraints. Whether I am analyzing vehicle purge systems or acoustic resonance in a chassis, the foundational physics and systems-thinking remain identical.</p>
+                </div>
+                <div class="prompt-card">
+                    <span class="prompt-question">Why does an engineer care so much about music?</span>
+                    <p class="prompt-answer">Engineering is often highly structured and mathematical. Music provides the creative, unstructured counterbalance. However, producing a great track and engineering a reliable product both rely on harmony, iteration, and fine-tuning small details until the overall system feels right.</p>
+                </div>
+                <div class="prompt-card">
+                    <span class="prompt-question">What is your design philosophy?</span>
+                    <p class="prompt-answer">Intuition, craft, and strategy. I believe the best engineering doesn't just work—it feels effortless to the end user. I strive to build systems that are as aesthetically thoughtful as they are technically sound.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        // --- Loading & Clock ---
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loader = document.getElementById('loading-screen');
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 1000);
+            }, 800);
+        });
+
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('local-clock').innerText = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }, 1000);
+
+        // --- Audio Player Logic ---
+        const audioEl = document.getElementById('bg-audio');
+        const playBtn = document.getElementById('play-btn');
+        const iconPlay = document.getElementById('icon-play');
+        const iconPause = document.getElementById('icon-pause');
+        const visBars = document.querySelectorAll('.visualizer-bar');
+        let isPlaying = false;
+        let visInterval;
+
+        playBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                // audioEl.play(); // Uncomment when actual src is provided
+                playBtn.classList.add('playing');
+                iconPlay.style.display = 'none'; iconPause.style.display = 'block';
+                // Simulate visualizer
+                visInterval = setInterval(() => {
+                    visBars.forEach(bar => {
+                        bar.style.height = (4 + Math.random() * 12) + 'px';
+                    });
+                }, 100);
+            } else {
+                // audioEl.pause(); // Uncomment when actual src is provided
+                playBtn.classList.remove('playing');
+                iconPlay.style.display = 'block'; iconPause.style.display = 'none';
+                clearInterval(visInterval);
+                visBars.forEach(bar => bar.style.height = '2px');
+            }
+        });
+
+        // --- Config & Navigation State ---
+        const REALMS = {
+            engineering: { target: { x: 0, y: 0, z: -70 }, uiId: 'engineering-scroll-container' },
+            music: { target: { x: 100, y: 0, z: -70 }, uiId: 'music-scroll-container' },
+            aboutme: { target: { x: 0, y: 0, z: -30 }, uiId: 'aboutme-container' }
+        };
+        let activeRealm = null;
+        let isTransitioning = false;
+        const homeScrollUI = document.getElementById('home-scroll-container');
+        let mouseX = 0; let mouseY = 0;
+
+        const container = document.getElementById('webgl-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0a0a0b, 0.012); // Deep editorial dark fog
+
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 45); 
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // Subdued, elegant particles instead of bright stars
+        const particleCount = 1500;
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesPos = new Float32Array(particleCount * 3);
+        for(let i = 0; i < particleCount; i++) {
+            particlesPos[i*3] = (Math.random() - 0.5) * 150;
+            particlesPos[i*3+1] = (Math.random() - 0.5) * 150;
+            particlesPos[i*3+2] = (Math.random() - 0.5) * 150;
+        }
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(particlesPos, 3));
+        const particlesMesh = new THREE.Points(particlesGeometry, new THREE.PointsMaterial({ color: 0x8a8a88, size: 0.08, transparent: true, opacity: 0.4 }));
+        scene.add(particlesMesh);
+
+        // ==========================================
+        // 1. SCENE: SOLAR SYSTEM (HOME)
+        // ==========================================
+        const solarSystemGroup = new THREE.Group();
+        solarSystemGroup.rotation.x = 0.8; // Flatter, more elegant angle
+        scene.add(solarSystemGroup);
+
+        // The Sun: Warm, architectural glow instead of neon magenta
+        const sunMat = new THREE.MeshStandardMaterial({
+            color: 0xffffff, emissive: 0xd9aa75, emissiveIntensity: 0.8,
+            roughness: 0.4, metalness: 0.1
+        });
+        const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(3, 64, 64), sunMat);
+        solarSystemGroup.add(sunMesh);
+
+        // Soft ambient aura around the sun
+        const centerGlow = new THREE.Mesh(new THREE.SphereGeometry(3.8, 32, 32), new THREE.MeshBasicMaterial({ color: 0xd9aa75, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending, side: THREE.BackSide }));
+        solarSystemGroup.add(centerGlow);
+
+        const sunLight = new THREE.PointLight(0xffeacc, 2.5, 120);
+        solarSystemGroup.add(sunLight);
+        solarSystemGroup.add(new THREE.AmbientLight(0x222225, 1.5));
+
+        const planets = [];
+        const planetData = [
+            { name: 'Engineering', color: 0x444444, radius: 1.2, distance: 12, speed: 0.003, id: 'engineering' },
+            { name: 'Music', color: 0x333333, radius: 1.0, distance: 18, speed: 0.002, id: 'music' }
+        ];
+
+        planetData.forEach((data) => {
+            // Matte, sophisticated materials
+            const mat = new THREE.MeshStandardMaterial({ 
+                color: data.color, roughness: 0.7, metalness: 0.2,
+                emissive: 0xffffff, emissiveIntensity: 0.02
+            });
+            const mesh = new THREE.Mesh(new THREE.SphereGeometry(data.radius, 64, 64), mat);
+            
+            // Subdued orbital rings
+            const ringMesh = new THREE.Mesh(new THREE.RingGeometry(data.distance - 0.02, data.distance + 0.02, 64), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.05, side: THREE.DoubleSide }));
+            ringMesh.rotation.x = Math.PI / 2; solarSystemGroup.add(ringMesh);
+
+            const labelEl = document.createElement('div'); labelEl.className = 'planet-label'; labelEl.innerText = data.name;
+            document.getElementById('planet-labels-container').appendChild(labelEl);
+
+            solarSystemGroup.add(mesh);
+            planets.push({ mesh, data, angle: Math.random() * Math.PI * 2, labelEl: labelEl });
+        });
+
+        // Sun label ("About")
+        const sunLabelEl = document.createElement('div'); sunLabelEl.className = 'planet-label'; sunLabelEl.innerText = 'About';
+        document.getElementById('planet-labels-container').appendChild(sunLabelEl);
+        planets.push({ mesh: sunMesh, data: { name: 'About', radius: 3, distance: 0, speed: 0, id: 'aboutme' }, angle: 0, labelEl: sunLabelEl });
+
+        // Scroll parallax for home page
+        ScrollTrigger.create({
+            trigger: ".contact-section", scroller: "#home-scroll-container", start: "top 100%", end: "top 0%", scrub: true,
+            onUpdate: (self) => { if (!activeRealm && !isTransitioning) { solarSystemGroup.position.y = self.progress * 25; solarSystemGroup.position.z = self.progress * -15; } }
+        });
+
+
+        // ==========================================
+        // 2. ENGINEERING REALM (Abstract geometric shapes representing tech)
+        // ==========================================
+        const engineeringGroup = new THREE.Group();
+        engineeringGroup.position.set(0, 0, -80); engineeringGroup.visible = false;
+        scene.add(engineeringGroup);
+        engineeringGroup.add(new THREE.AmbientLight(0x223344, 1));
+        const engSpot = new THREE.SpotLight(0xd9aa75, 4); engSpot.position.set(10, 20, 10); engineeringGroup.add(engSpot);
+
+        // A large, slow-rotating architectural torus knot to represent complex engineering systems
+        const engCore = new THREE.Mesh(
+            new THREE.TorusKnotGeometry(6, 1.5, 200, 32), 
+            new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2, wireframe: true, transparent: true, opacity: 0.3 })
+        );
+        engineeringGroup.add(engCore);
+
+        // Scroll logic for engineering
+        function updateEngineeringScene(progress) {
+            const timelineLine = document.getElementById('eng-timeline-line');
+            if (progress > 0.02 && progress < 0.98) {
+                timelineLine.style.display = 'block';
+            } else {
+                timelineLine.style.display = 'none';
+            }
+            // Rotate the core based on scroll
+            engCore.rotation.y = progress * Math.PI * 2;
+            engCore.rotation.x = progress * Math.PI;
+        }
+
+        ScrollTrigger.create({
+            trigger: "#eng-scroll-track", scroller: "#engineering-scroll-container", start: "top top", end: "bottom bottom", scrub: true,
+            onUpdate: (self) => updateEngineeringScene(self.progress)
+        });
+
+        // ==========================================
+        // 3. MUSIC REALM (Cover Flow)
+        // ==========================================
+        function updateMusicCards(progress) {
+            const cards = document.querySelectorAll('.music-card');
+            const focusIndex = progress * (cards.length - 1);
+            cards.forEach((card, i) => {
+                const d = i - focusIndex; 
+                const y = d * 350; 
+                const x = Math.sin(i * 0.5) * 300;
+                const z = Math.cos(i * 0.5) * 200 - 300;
+                let opacity = 1 - Math.abs(d) * 0.3; 
+                if (opacity <= 0) { card.style.display = 'none'; } 
+                else {
+                    card.style.display = 'block';
+                    card.style.transform = `translate3d(${x}px, ${y}px, ${z}px) rotateY(${-x*0.05}deg)`;
+                    card.style.opacity = Math.max(0, opacity);
+                    card.style.zIndex = Math.round(100 - Math.abs(d) * 10);
+                }
+            });
+        }
+        ScrollTrigger.create({
+            trigger: "#music-scroll-track", scroller: "#music-scroll-container", start: "top top", end: "bottom bottom", scrub: true,
+            onUpdate: (self) => updateMusicCards(self.progress)
+        });
+        updateMusicCards(0);
+
+
+        // --- Interaction & Mouse Parallax ---
+        const mouse = new THREE.Vector2(-999, -999);
+        const raycaster = new THREE.Raycaster();
+        let hoveredPlanet = null;
+        const planetVec = new THREE.Vector3(); 
+
+        window.addEventListener('mousemove', (e) => {
+            if (isTransitioning) return;
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            mouseX = mouse.x; mouseY = mouse.y;
+        });
+
+        window.addEventListener('click', () => {
+            if (hoveredPlanet && !isTransitioning && !activeRealm && homeScrollUI.scrollTop < window.innerHeight * 0.3) {
+                triggerRealmDive(hoveredPlanet.data.id);
+            }
+        });
+
+        const backBtn = document.getElementById('back-btn');
+        backBtn.addEventListener('click', returnToOrbit);
+
+        const realmGroups = { engineering: engineeringGroup };
+
+        function triggerRealmDive(realmId) {
+            isTransitioning = true;
+            activeRealm = realmId;
+            document.body.style.cursor = 'default';
+            homeScrollUI.style.cursor = 'default';
+
+            gsap.to(homeScrollUI, { opacity: 0, duration: 0.5 });
+            homeScrollUI.style.pointerEvents = 'none';
+
+            const config = REALMS[realmId];
+            const targetUI = document.getElementById(config.uiId);
+            const planetInfo = planets.find(p => p.data.id === realmId);
+            const targetPos = new THREE.Vector3();
+            planetInfo.mesh.getWorldPosition(targetPos);
+
+            const tl = gsap.timeline({
+                onComplete: () => {
+                    isTransitioning = false;
+                    targetUI.style.display = 'block';
+                    if (realmId === 'music') { targetUI.scrollTop = 0; updateMusicCards(0); ScrollTrigger.refresh(); }
+                    else if (realmId === 'engineering') { targetUI.scrollTop = 0; updateEngineeringScene(0); ScrollTrigger.refresh(); } 
+                    else if (realmId === 'aboutme') { targetUI.scrollTop = 0; }
+                    gsap.to(targetUI, { opacity: 1, duration: 1 });
+                    backBtn.style.display = 'block';
+                    gsap.to(backBtn, { opacity: 1, duration: 1 });
+                }
+            });
+
+            tl.to(camera.position, { x: targetPos.x, y: targetPos.y, z: targetPos.z, duration: 1.5, ease: "power2.inOut" });
+            tl.add(() => {
+                solarSystemGroup.visible = false;
+                if (realmGroups[realmId]) realmGroups[realmId].visible = true;
+                camera.position.set(config.target.x, config.target.y, config.target.z + 10);
+            });
+            tl.to(camera.position, { z: config.target.z, duration: 1.2, ease: "power2.out" });
+        }
+
+        function returnToOrbit() {
+            if(isTransitioning) return;
+            isTransitioning = true;
+            
+            const config = REALMS[activeRealm];
+            const activeUI = document.getElementById(config.uiId);
+            const planetInfo = planets.find(p => p.data.id === activeRealm);
+            const targetPos = new THREE.Vector3();
+            planetInfo.mesh.getWorldPosition(targetPos);
+
+            gsap.to([activeUI, backBtn], {
+                opacity: 0, duration: 0.5, onComplete: () => {
+                    activeUI.style.display = 'none'; backBtn.style.display = 'none';
+                    if(activeUI.scrollTop !== undefined) activeUI.scrollTop = 0;
+                }
+            });
+
+            const tl = gsap.timeline({
+                onComplete: () => {
+                    isTransitioning = false; activeRealm = null;
+                    homeScrollUI.style.pointerEvents = 'auto'; gsap.to(homeScrollUI, { opacity: 1, duration: 1 });
+                }
+            });
+
+            tl.to(camera.position, { z: config.target.z + 10, duration: 1, ease: "power2.in" });
+            tl.add(() => {
+                solarSystemGroup.visible = true;
+                if (realmGroups[activeRealm]) realmGroups[activeRealm].visible = false;
+                camera.position.copy(targetPos);
+            });
+            tl.to(camera.position, { x: 0, y: 0, z: 45, duration: 1.5, ease: "power2.out" });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = Date.now() * 0.001;
+
+            particlesMesh.rotation.y += 0.0005; 
+            particlesMesh.rotation.x += 0.0002;
+
+            if (activeRealm === 'engineering' || isTransitioning) {
+                // Subtle ambient movement
+                engineeringGroup.rotation.y = Math.sin(t * 0.5) * 0.05 + mouseX * 0.05;
+                engineeringGroup.rotation.x = Math.cos(t * 0.5) * 0.05 + mouseY * 0.05;
+            }
+
+            if (!activeRealm && !isTransitioning && homeScrollUI.scrollTop < window.innerHeight * 0.3) {
+                planets.forEach(p => {
+                    if (p.data.id !== 'aboutme') {
+                        p.angle += p.data.speed;
+                        p.mesh.position.x = Math.cos(p.angle) * p.data.distance;
+                        p.mesh.position.z = Math.sin(p.angle) * p.data.distance;
+                        p.mesh.rotation.y += 0.01;
+                    }
+                    
+                    p.mesh.getWorldPosition(planetVec);
+                    planetVec.y += p.data.radius + 1.2; 
+                    planetVec.project(camera);
+                    
+                    const x = (planetVec.x * .5 + .5) * window.innerWidth;
+                    const y = (planetVec.y * -.5 + .5) * window.innerHeight;
+                    
+                    if (planetVec.z < 1) {
+                        p.labelEl.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+                        p.labelEl.style.opacity = '1';
+                    } else { p.labelEl.style.opacity = '0'; }
+                });
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(planets.map(p => p.mesh));
+
+                if (intersects.length > 0) {
+                    const intersectedMesh = intersects[0].object;
+                    if (!hoveredPlanet || hoveredPlanet.mesh !== intersectedMesh) {
+                        if (hoveredPlanet) {
+                            gsap.to(hoveredPlanet.mesh.scale, {x:1, y:1, z:1, duration: 0.3});
+                            if (hoveredPlanet.data.id !== 'aboutme') gsap.to(hoveredPlanet.mesh.material.emissive, {intensity: 0.02, duration: 0.3});
+                        }
+                        hoveredPlanet = planets.find(p => p.mesh === intersectedMesh);
+                        document.body.style.cursor = 'pointer'; homeScrollUI.style.cursor = 'pointer';
+                        
+                        gsap.to(hoveredPlanet.mesh.scale, {x:1.15, y:1.15, z:1.15, duration: 0.3});
+                        if (hoveredPlanet.data.id !== 'aboutme') gsap.to(hoveredPlanet.mesh.material.emissive, {intensity: 0.3, duration: 0.3});
+                    }
+                } else if (hoveredPlanet) {
+                    gsap.to(hoveredPlanet.mesh.scale, {x:1, y:1, z:1, duration: 0.3});
+                    if (hoveredPlanet.data.id !== 'aboutme') gsap.to(hoveredPlanet.mesh.material.emissive, {intensity: 0.02, duration: 0.3});
+                    hoveredPlanet = null;
+                    document.body.style.cursor = 'default'; homeScrollUI.style.cursor = 'default';
+                }
+            } else {
+                if (hoveredPlanet) { 
+                    hoveredPlanet.mesh.scale.set(1, 1, 1); 
+                    if (hoveredPlanet.data.id !== 'aboutme') hoveredPlanet.mesh.material.emissiveIntensity = 0.02;
+                    hoveredPlanet = null; 
+                }
+                document.body.style.cursor = 'default'; homeScrollUI.style.cursor = 'default';
+
+                planets.forEach(p => {
+                    p.labelEl.style.opacity = '0'; 
+                    if(!activeRealm && !isTransitioning && p.data.id !== 'aboutme') {
+                        p.angle += p.data.speed;
+                        p.mesh.position.x = Math.cos(p.angle) * p.data.distance;
+                        p.mesh.position.z = Math.sin(p.angle) * p.data.distance;
+                        p.mesh.rotation.y += 0.01;
+                    }
+                });
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
