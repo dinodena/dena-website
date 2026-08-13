@@ -1,14 +1,13 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dena Attar — Engineer & Creative</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@100..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@100..800&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -16,32 +15,39 @@
 
     <style>
         :root {
-            --bg-dark: #0a0a0b;
-            --text-main: #f0f0ed;
-            --text-muted: #8a8a88;
-            --accent-warm: #d9aa75; /* A soft, sophisticated amber/gold */
-            --glass-bg: rgba(20, 20, 22, 0.4);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            /* LIGHT MODE DEFAULT VARIABLES */
+            --bg-dark: #f5f5f3;
+            --text-main: #0a0a0b;
+            --text-muted: #666664;
+            --accent-warm: #e74c3c; 
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(0, 0, 0, 0.1);
             
             --font-sans: 'Inter', sans-serif;
             --font-serif: 'Instrument Serif', serif;
             --font-mono: 'JetBrains Mono', monospace;
         }
 
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: var(--font-sans);
-            overflow: hidden; 
-            overscroll-behavior: none;
-            -webkit-font-smoothing: antialiased;
+        body.dark-mode {
+            /* DARK MODE VARIABLES */
+            --bg-dark: #0a0a0b;
+            --text-main: #f0f0ed;
+            --text-muted: #8a8a88;
+            --accent-warm: #d9aa75; 
+            --glass-bg: rgba(20, 20, 22, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.08);
         }
 
-        ::selection {
-            background: var(--accent-warm);
-            color: var(--bg-dark);
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg-dark); color: var(--text-main);
+            font-family: var(--font-sans);
+            overflow: hidden; overscroll-behavior: none;
+            -webkit-font-smoothing: antialiased;
+            transition: background-color 0.5s ease, color 0.5s ease;
         }
+
+        ::selection { background: var(--accent-warm); color: var(--bg-dark); }
 
         #webgl-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -50,77 +56,107 @@
 
         .top-nav {
             position: fixed; top: 0; left: 0; width: 100%;
-            padding: 24px 40px; box-sizing: border-box;
+            padding: 24px 5vw; box-sizing: border-box;
             display: flex; justify-content: space-between; align-items: center;
             z-index: 50; pointer-events: none;
         }
 
-        .brand-name {
-            font-family: var(--font-serif);
-            font-size: 1.8rem;
-            font-style: italic;
-            pointer-events: auto;
-            cursor: pointer;
-            transition: color 0.3s ease;
+        .header-left {
+            display: flex; align-items: center; gap: 20px;
+            pointer-events: auto; z-index: 55;
         }
+
+        .theme-btn {
+            background: transparent; border: none; cursor: pointer;
+            width: 32px; height: 32px; display: flex; justify-content: center; align-items: center;
+            border-radius: 50%; border: 1px solid var(--glass-border);
+            color: var(--text-main); transition: all 0.3s ease;
+        }
+        .theme-btn:hover { background: var(--glass-bg); }
+        .theme-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+        .brand-name {
+            font-family: var(--font-serif); font-size: 1.8rem; font-style: italic;
+            cursor: pointer; transition: color 0.3s ease, opacity 0.5s ease;
+            opacity: 0; pointer-events: none;
+        }
+        .brand-name.visible { opacity: 1; pointer-events: auto; }
         .brand-name:hover { color: var(--accent-warm); }
 
         .audio-deck {
-            pointer-events: auto;
-            display: flex; align-items: center; gap: 16px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            padding: 8px 16px 8px 8px;
-            border-radius: 40px;
-            backdrop-filter: blur(12px);
-            transition: all 0.3s ease;
+            pointer-events: auto; display: flex; align-items: center; gap: 12px;
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 8px 16px 8px 8px; border-radius: 40px;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            transition: all 0.3s ease; z-index: 55;
         }
-        .audio-deck:hover { border-color: rgba(255, 255, 255, 0.2); }
-
         .play-btn {
-            width: 36px; height: 36px;
-            background: var(--text-main);
-            border: none; border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            cursor: pointer;
-            transition: transform 0.2s ease;
+            width: 36px; height: 36px; background: var(--text-main);
+            border: none; border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; transition: transform 0.2s ease; flex-shrink: 0;
         }
         .play-btn:active { transform: scale(0.95); }
         .play-btn svg { width: 14px; height: 14px; fill: var(--bg-dark); margin-left: 2px; }
         .play-btn.playing svg { margin-left: 0; }
 
         .track-info { display: flex; flex-direction: column; justify-content: center; }
-        .track-label {
-            font-family: var(--font-mono);
-            font-size: 0.65rem; color: var(--text-muted);
-            letter-spacing: 0.1em; text-transform: uppercase;
-        }
-        .track-name { font-size: 0.85rem; font-weight: 500; }
+        .track-label { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+        .track-name { font-size: 0.85rem; font-weight: 500; white-space: nowrap; }
         
-        .visualizer {
-            width: 40px; height: 16px;
-            display: flex; align-items: center; gap: 2px;
-            margin-left: 8px;
-        }
+        .visualizer { display: flex; align-items: center; gap: 2px; margin-left: 4px; height: 16px; }
         .visualizer-bar {
             width: 3px; height: 2px;
-            background: var(--accent-warm);
-            border-radius: 2px;
+            background: var(--accent-warm); border-radius: 2px;
             transition: height 0.1s ease;
         }
 
+        /* Desktop Nav Border Styling */
         .nav-links {
-            pointer-events: auto;
-            display: flex; gap: 24px;
-            font-size: 0.9rem; font-weight: 400;
+            pointer-events: auto; display: flex; gap: 24px;
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 10px 24px; border-radius: 40px;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            align-items: center; z-index: 55;
         }
-        .nav-links a { color: var(--text-main); text-decoration: none; transition: color 0.3s ease; }
+        .nav-links a { 
+            font-family: var(--font-sans); font-size: 0.95rem; font-weight: 600;
+            color: var(--text-main); text-decoration: none; transition: color 0.3s ease; 
+        }
         .nav-links a:hover { color: var(--accent-warm); }
+
+        /* Mobile Hamburger Button */
+        .hamburger-btn {
+            display: none; background: transparent; border: none; cursor: pointer;
+            width: 40px; height: 40px; flex-direction: column; justify-content: center; align-items: center; gap: 6px;
+            pointer-events: auto; z-index: 60;
+        }
+        .hamburger-btn span {
+            display: block; width: 24px; height: 2px; background-color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+        .hamburger-btn.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+        .hamburger-btn.open span:nth-child(2) { opacity: 0; }
+        .hamburger-btn.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark); z-index: 52;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2rem;
+            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+        }
+        .mobile-menu-overlay.active { opacity: 1; pointer-events: auto; }
+        .mobile-menu-overlay a {
+            font-family: var(--font-serif); font-size: 3rem; font-style: italic;
+            color: var(--text-main); text-decoration: none; transition: color 0.3s ease;
+        }
+        .mobile-menu-overlay a:hover { color: var(--accent-warm); }
 
         .telemetry-dock {
             position: fixed; bottom: 40px; left: 40px;
             pointer-events: none; z-index: 20;
             display: flex; flex-direction: column; gap: 8px;
+            transition: opacity 0.2s ease; /* Smooth fade when scrolling */
         }
         .tel-item {
             display: flex; align-items: center; gap: 12px;
@@ -129,41 +165,24 @@
         }
         .tel-value { color: var(--text-main); }
         .tel-indicator {
-            width: 6px; height: 6px; border-radius: 50%;
-            background: #2ecc71;
-            box-shadow: 0 0 8px rgba(46, 204, 113, 0.6);
-            animation: pulse-dot 2s infinite;
+            width: 6px; height: 6px; border-radius: 50%; background: #2ecc71;
+            box-shadow: 0 0 8px rgba(46, 204, 113, 0.6); animation: pulse-dot 2s infinite;
         }
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
-        }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
         .planet-label {
             position: absolute; top: 0; left: 0;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            padding: 6px 12px; border-radius: 20px;
-            color: var(--text-main);
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 6px 12px; border-radius: 20px; color: var(--text-main);
             font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em;
-            text-transform: uppercase; pointer-events: none;
-            opacity: 0; backdrop-filter: blur(8px);
+            text-transform: uppercase; pointer-events: none; opacity: 0; 
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             transition: opacity 0.3s ease, border-color 0.3s ease;
         }
 
-        .back-btn {
-            position: fixed; top: 100px; left: 40px;
-            background: transparent; border: 1px solid var(--glass-border);
-            color: var(--text-muted); padding: 8px 16px; border-radius: 20px;
-            font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase;
-            cursor: pointer; transition: all 0.3s ease; z-index: 60;
-            display: none; opacity: 0; pointer-events: auto; backdrop-filter: blur(8px);
-        }
-        .back-btn:hover { color: var(--text-main); border-color: var(--text-main); }
-
         #home-scroll-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            overflow-y: auto; overflow-x: hidden; z-index: 5;
-            scrollbar-width: none; 
+            overflow-y: auto; overflow-x: hidden; z-index: 5; scrollbar-width: none; 
         }
         #home-scroll-container::-webkit-scrollbar { display: none; } 
 
@@ -172,26 +191,14 @@
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             pointer-events: none; 
         }
-
         .huge-title {
-            font-family: var(--font-serif);
-            font-size: clamp(6rem, 12vw, 15rem);
-            font-weight: 400; font-style: italic;
-            line-height: 0.9; margin: 0;
-            text-align: center; color: var(--text-main);
-            letter-spacing: -0.02em; pointer-events: auto;
+            font-family: var(--font-serif); font-size: clamp(4rem, 12vw, 15rem);
+            font-weight: 400; font-style: italic; line-height: 0.9; margin: 0;
+            text-align: center; color: var(--text-main); letter-spacing: -0.02em; pointer-events: auto;
         }
         .subtitle {
-            font-family: var(--font-mono);
-            font-size: 0.85rem; color: var(--text-muted);
-            letter-spacing: 0.15em; text-transform: uppercase;
-            margin-top: 24px; pointer-events: auto;
-        }
-
-        .explore-hint {
-            position: absolute; bottom: 40px; right: 40px;
-            font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
-            letter-spacing: 0.1em; pointer-events: none; text-align: right;
+            font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);
+            letter-spacing: 0.15em; text-transform: uppercase; margin-top: 24px; pointer-events: auto; text-align: center;
         }
 
         .home-spacer { height: 60vh; } 
@@ -200,22 +207,17 @@
             padding: 8vw 5vw 4vw 5vw; pointer-events: auto; position: relative; z-index: 10;
         }
         .contact-header {
-            font-family: var(--font-serif); font-size: clamp(4rem, 8vw, 10rem);
-            font-weight: 400; font-style: italic; line-height: 0.9;
-            margin-bottom: 8vh; color: var(--text-main);
+            font-family: var(--font-serif); font-size: clamp(3rem, 8vw, 10rem);
+            font-weight: 400; font-style: italic; line-height: 0.9; margin-bottom: 8vh; color: var(--text-main);
         }
         .contact-grid {
-            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px;
             border-top: 1px solid var(--glass-border); padding-top: 40px;
-            font-family: var(--font-sans);
         }
         .contact-col span { display: block; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; }
         .contact-col a, .contact-col p { color: var(--text-main); text-decoration: none; font-size: 1.1rem; margin: 0 0 8px 0; transition: color 0.3s; display: block; }
         .contact-col a:hover { color: var(--accent-warm); }
-        .footer-bottom {
-            margin-top: 80px; display: flex; justify-content: space-between;
-            font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
-        }
+        .footer-bottom { margin-top: 80px; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
 
         #engineering-scroll-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -227,8 +229,8 @@
 
         .eng-timeline-line {
             position: fixed; left: 50%; top: 0; width: 1px; height: 100%;
-            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0.15) 80%, rgba(255,255,255,0) 100%);
-            z-index: -1; transform: translateX(-50%); display: none;
+            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, var(--text-muted) 20%, var(--text-muted) 80%, rgba(255,255,255,0) 100%);
+            z-index: -1; transform: translateX(-50%); display: none; opacity: 0.3;
         }
 
         .eng-section {
@@ -238,87 +240,146 @@
         .eng-section.left-align { left: 5%; }
         .eng-section.right-align { left: 55%; }
 
-        #eng-sec-intro { top: 0vh; }
-        #eng-sec-nasa { top: 100vh; }
-        #eng-sec-tesla { top: 200vh; }
-        #eng-sec-google { top: 300vh; }
-        #eng-sec-ge { top: 400vh; }
-        #eng-sec-school { top: 500vh; }
+        #eng-sec-intro { top: 0vh; } #eng-sec-nasa { top: 100vh; } #eng-sec-tesla { top: 200vh; }
+        #eng-sec-google { top: 300vh; } #eng-sec-ge { top: 400vh; } #eng-sec-school { top: 500vh; }
 
+        /* Simplified Card for timeline */
         .eng-card {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            padding: 3rem; border-radius: 16px;
-            backdrop-filter: blur(20px);
-            transition: border-color 0.4s ease, transform 0.4s ease;
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 2rem; border-radius: 16px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            transition: border-color 0.4s ease, transform 0.4s ease, box-shadow 0.3s ease;
+            cursor: pointer;
         }
-        .eng-card:hover { border-color: rgba(255, 255, 255, 0.2); transform: translateY(-5px); }
-
-        .eng-tag {
-            font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-warm);
-            letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px; display: block;
+        .eng-card:hover { 
+            border-color: rgba(255, 255, 255, 0.4); transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
-        .exp-header { margin-bottom: 24px; }
-        .exp-header h2 { font-family: var(--font-serif); font-size: 2.5rem; font-style: italic; margin: 0 0 4px 0; color: #fff; font-weight: 400; }
-        .exp-header h3 { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); margin: 0; text-transform: uppercase; letter-spacing: 0.05em; }
-        .eng-card p { color: #d0d0c8; line-height: 1.7; font-size: 1.05rem; font-weight: 300; }
 
-        /* Tech Stack List inside Intro */
-        .tech-list { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+        .eng-tag { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-warm); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; display: block; }
+        .exp-header { display: flex; align-items: center; gap: 20px; }
+        .exp-logo { 
+            width: 64px; height: 64px; border-radius: 12px; overflow: hidden; border: 1px solid var(--glass-border); 
+            flex-shrink: 0; background: rgba(255, 255, 255, 0.9); display: flex; justify-content: center; align-items: center;
+        }
+        .exp-logo img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+        .exp-titles { display: flex; flex-direction: column; }
+        .exp-header h2 { font-family: var(--font-serif); font-size: 2.2rem; font-style: italic; margin: 0 0 4px 0; color: var(--text-main); font-weight: 400; line-height: 1; }
+        .exp-header h3 { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); margin: 0; text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        /* Popup Modal Styles */
+        #eng-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            z-index: 100; display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #eng-modal.active { opacity: 1; pointer-events: auto; }
+        .modal-content {
+            background: var(--bg-dark); border: 1px solid var(--glass-border);
+            width: 90%; max-width: 700px; max-height: 85vh; overflow-y: auto;
+            border-radius: 16px; padding: 40px; position: relative;
+            transform: translateY(20px); transition: transform 0.3s ease;
+            scrollbar-width: none;
+        }
+        #eng-modal.active .modal-content { transform: translateY(0); }
+        .modal-content::-webkit-scrollbar { display: none; }
+        
+        .modal-close {
+            position: absolute; top: 20px; right: 20px; background: transparent; border: none;
+            color: var(--text-muted); font-size: 1.5rem; cursor: pointer; transition: color 0.2s;
+        }
+        .modal-close:hover { color: var(--accent-warm); }
+        .modal-desc { margin: 24px 0; font-size: 1.1rem; line-height: 1.7; color: var(--text-main); font-weight: 300; }
+        
+        .modal-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+        .photo-slot {
+            width: 100%; aspect-ratio: 4/3; background: var(--glass-bg);
+            border: 1px dashed var(--text-muted); border-radius: 12px;
+            display: flex; justify-content: center; align-items: center;
+            color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; text-align: center; padding: 10px;
+        }
+        .tech-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
         .tech-pill {
             padding: 6px 14px; border: 1px solid var(--glass-border); border-radius: 20px;
-            font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-main);
-            background: rgba(255, 255, 255, 0.02);
+            font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-main); background: var(--glass-bg);
         }
 
-        #music-scroll-container {
+        #music-realm-ui {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            overflow-y: auto; overflow-x: hidden; z-index: 10; pointer-events: auto;
-            display: none; opacity: 0; scrollbar-width: none; 
+            z-index: 10; pointer-events: none; display: none; opacity: 0;
         }
-        #music-scroll-container::-webkit-scrollbar { display: none; }
-        #music-scroll-track { position: absolute; top: 0; left: 0; width: 100%; height: 800vh; z-index: 0; }
-
         .music-title-bg {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-family: var(--font-serif); font-size: 20vw; font-style: italic;
-            color: rgba(255, 255, 255, 0.02); z-index: 0; pointer-events: none; margin: 0;
+            position: absolute; top: 40px; right: 5%;
+            font-family: var(--font-serif); font-size: 8vw; font-style: italic;
+            color: rgba(0, 0, 0, 0.05); z-index: 0; pointer-events: none; margin: 0; text-align: right; line-height: 0.8;
         }
+        body.dark-mode .music-title-bg { color: rgba(255, 255, 255, 0.03); }
 
-        .music-cards-viewport {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            perspective: 1000px; pointer-events: none; z-index: 1;
-            display: flex; justify-content: center; align-items: center;
+        .vinyl-crate-container {
+            position: absolute; top: 15vh; left: 5%;
+            width: 45%; max-width: 600px; height: 75vh;
+            pointer-events: auto; overflow-y: auto; overflow-x: hidden;
+            scrollbar-width: none; padding-right: 20px;
+            mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 85%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 85%, transparent 100%);
         }
-        .music-cards-wrapper { position: relative; transform-style: preserve-3d; width: 0; height: 0; }
-        .music-card { position: absolute; top: -150px; left: -150px; width: 300px; cursor: pointer; pointer-events: auto; transform-origin: center center; }
+        .vinyl-crate-container::-webkit-scrollbar { display: none; }
+        .vinyl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 40px 20px; padding: 40px 0; }
+        .vinyl-item { position: relative; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
         
-        .album-cover { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-        .artist-name { margin-top: 1.5rem; font-family: var(--font-mono); font-size: 0.85rem; color: #fff; text-align: center; letter-spacing: 0.1em; text-transform: uppercase; }
+        .vinyl-art-wrapper { position: relative; width: 140px; height: 140px; margin-bottom: 16px; perspective: 800px; }
+        .vinyl-sleeve {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 4px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); z-index: 3; transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            object-fit: cover; background: #111;
+        }
+        .vinyl-disc {
+            position: absolute; top: 2px; right: 2px; width: 136px; height: 136px;
+            border-radius: 50%; background: #0a0a0a; z-index: 2;
+            box-shadow: inset 0 0 0 4px #1a1a1a, inset 0 0 10px rgba(255,255,255,0.1);
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); display: flex; justify-content: center; align-items: center;
+        }
+        .vinyl-disc::after { content: ''; width: 44px; height: 44px; border-radius: 50%; background: var(--accent-warm); border: 2px solid #222; }
+        .vinyl-disc::before { content: ''; position: absolute; width: 8px; height: 8px; background: #000; border-radius: 50%; z-index: 5; }
+        .vinyl-item:hover .vinyl-sleeve { transform: translateX(-15px) rotateY(-15deg); box-shadow: 15px 15px 25px rgba(0,0,0,0.4); }
+        .vinyl-item:hover .vinyl-disc { transform: translateX(45px) rotate(90deg); }
+
+        .vinyl-info { text-align: center; width: 100%; }
+        .vinyl-artist { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-warm); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; display: block; }
+        .vinyl-track { font-size: 0.95rem; font-weight: 500; color: var(--text-main); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Floating photo in Lounge */
+        .floating-music-photo {
+            position: absolute; right: 10%; top: 25vh;
+            width: 30vw; max-width: 400px; aspect-ratio: 4/5;
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 12px; border-radius: 4px; transform: rotate(4deg);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15); pointer-events: auto; z-index: 5;
+        }
+        .floating-music-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 2px; }
 
         #aboutme-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             overflow-y: auto; overflow-x: hidden; z-index: 10; pointer-events: auto;
             display: none; opacity: 0; scrollbar-width: none;
-            background: var(--bg-dark); /* Solid background for readability */
+            background: var(--bg-dark); 
         }
         #aboutme-container::-webkit-scrollbar { display: none; }
-
         .aboutme-inner { max-width: 800px; margin: 0 auto; padding: 15vh 5%; }
         .about-header { margin-bottom: 80px; }
         .about-header h1 { font-family: var(--font-serif); font-size: 5rem; font-style: italic; font-weight: 400; margin: 0 0 20px 0; }
         .about-header p { font-size: 1.2rem; color: var(--text-muted); line-height: 1.6; max-width: 600px; }
 
-        /* Zia Oh Inspired Prompt Lounge */
         .prompt-lounge { display: flex; flex-direction: column; gap: 32px; }
-        .prompt-card {
-            background: var(--glass-bg); border: 1px solid var(--glass-border);
-            padding: 40px; border-radius: 16px;
-        }
+        .prompt-card { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 40px; border-radius: 16px; }
         .prompt-question { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-warm); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; display: block; }
         .prompt-answer { font-size: 1.1rem; line-height: 1.7; color: var(--text-main); font-weight: 300; margin: 0; }
 
-        /* Loading Screen */
+        /* About Page Photo Grid */
+        .about-photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 60px; }
+        .about-photo-grid .photo-slot { aspect-ratio: 1; overflow: hidden; padding: 0; }
+        .about-photo-grid img { width: 100%; height: 100%; object-fit: cover; }
+
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg-dark); z-index: 9999; display: flex;
@@ -326,6 +387,32 @@
         }
         .loading-text { font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.2em; text-transform: uppercase; animation: blink 1.5s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hamburger-btn { display: flex; }
+            .audio-deck { max-width: 200px; }
+            .track-info { display: none; } /* Hide track text on small phones to save space */
+            
+            .eng-timeline-line { display: none !important; } /* Hide vertical line on mobile */
+            .eng-section { width: 85%; }
+            .eng-section.left-align, .eng-section.right-align { left: 7.5%; }
+            .eng-card { padding: 1.5rem; display: flex; flex-direction: column; justify-content: center; min-height: 120px; }
+            
+            .vinyl-crate-container { width: 90%; left: 5%; height: 50vh; top: 10vh; }
+            .vinyl-grid { grid-template-columns: repeat(2, 1fr); justify-items: center; }
+            
+            .floating-music-photo {
+                position: relative; top: auto; right: auto; left: 5%; width: 90%;
+                margin-top: 10vh; transform: none; margin-bottom: 20px;
+            }
+
+            .about-header h1 { font-size: 3.5rem; }
+            .about-photo-grid { grid-template-columns: 1fr; }
+            
+            .modal-content { padding: 24px; width: 95%; }
+            .modal-photos { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -337,23 +424,29 @@
 
     <!-- Background 3D Canvas -->
     <div id="webgl-container"></div>
-
-    <!-- Planet Hover Labels -->
     <div id="planet-labels-container"></div>
 
-    <!-- Top Navigation & Audio Player -->
     <nav class="top-nav">
-        <div class="brand-name" onclick="location.reload()">dena attar.</div>
+        <div class="header-left">
+            <button id="theme-toggle" class="theme-btn">
+                <!-- Moon icon (SVG path matches provided image perfectly) -->
+                <svg id="icon-moon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+            <div class="brand-name" id="top-brand" onclick="returnToOrbit()">dena attar.</div>
+        </div>
         
         <div class="audio-deck" id="audio-deck">
-            <!-- Hidden audio element for actual music -->
-            <!-- Add your mp3 file here: <audio id="bg-audio" src="path/to/nujabes.mp3" loop></audio> -->
-            <audio id="bg-audio" loop></audio>
+            <!-- 
+                === ADD MP3 HERE FOR STUDIO AMBIENCE ===
+                Put the local path or URL to your mp3 file in the src attribute.
+                Example: <audio id="bg-audio" src="./audio/studio-ambience.mp3" loop></audio> 
+            -->
+            <audio id="bg-audio" src="" loop></audio>
             
             <button class="play-btn" id="play-btn">
-                <!-- Play Icon -->
                 <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <!-- Pause Icon (Hidden initially) -->
                 <svg id="icon-pause" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
             </button>
             <div class="track-info">
@@ -368,26 +461,33 @@
         </div>
 
         <div class="nav-links">
-            <a href="#">Work</a>
-            <a href="#">About</a>
+            <a href="javascript:void(0)" onclick="triggerRealmDive('engineering')">Work</a>
+            <a href="javascript:void(0)" onclick="triggerRealmDive('music')">Lounge</a>
+            <a href="javascript:void(0)" onclick="triggerRealmDive('aboutme')">About</a>
         </div>
+
+        <button class="hamburger-btn" id="hamburger-btn">
+            <span></span><span></span><span></span>
+        </button>
     </nav>
 
-    <!-- Engineering Telemetry Dock -->
-    <div class="telemetry-dock">
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobile-menu">
+        <a href="javascript:void(0)" onclick="closeMobileMenu(); triggerRealmDive('engineering')">Work</a>
+        <a href="javascript:void(0)" onclick="closeMobileMenu(); triggerRealmDive('music')">Lounge</a>
+        <a href="javascript:void(0)" onclick="closeMobileMenu(); triggerRealmDive('aboutme')">About</a>
+    </div>
+
+    <div class="telemetry-dock" id="telemetry-dock">
         <div class="tel-item"><span class="tel-label">LOC:</span><span class="tel-value">Earth / Florida</span></div>
         <div class="tel-item"><span class="tel-label">LCL:</span><span class="tel-value" id="local-clock">00:00</span></div>
         <div class="tel-item"><div class="tel-indicator"></div><span class="tel-value">Systems Online</span></div>
     </div>
 
-    <button class="back-btn" id="back-btn">← Return to Orbit</button>
-
-    <!-- HOME SCREEN OVERLAY -->
     <div id="home-scroll-container">
         <div class="home-hero">
             <h1 class="huge-title">dena attar</h1>
             <div class="subtitle">Engineer · Developer · Creator</div>
-            <div class="explore-hint">Interact with the planetary system<br>to explore realms.</div>
         </div>
 
         <div class="home-spacer"></div>
@@ -416,80 +516,123 @@
         </div>
     </div>
 
-    <!-- ENGINEERING REALM TIMELINE -->
     <div id="engineering-scroll-container">
         <div id="eng-scroll-track"></div>
         <div class="eng-timeline-line" id="eng-timeline-line"></div>
         
         <div class="eng-section left-align" id="eng-sec-intro">
-            <div class="eng-card" style="background: transparent; border: none; backdrop-filter: none; padding: 0;">
+            <!-- Data attributes store the info for the popup modal -->
+            <div class="eng-card" onclick="openModal('Systems & Software', 'Engineering', 'Core Competencies', 'Bridging the gap between hardware reliability and robust software architecture. From optimizing flight systems to building responsive web environments.', ['Python', 'C++', 'JavaScript', 'React', 'Three.js', 'Fluid Dynamics'], 'https://placehold.co/100x100/111/eee?text=DEV')">
                 <span class="eng-tag">Systems & Software</span>
                 <div class="exp-header">
-                    <h2>Engineering</h2>
-                    <h3>Core Competencies</h3>
-                </div>
-                <p>Bridging the gap between hardware reliability and robust software architecture. From optimizing flight systems to building responsive web environments.</p>
-                <div class="tech-list">
-                    <span class="tech-pill">Python</span><span class="tech-pill">C++</span><span class="tech-pill">JavaScript</span>
-                    <span class="tech-pill">React</span><span class="tech-pill">Three.js</span><span class="tech-pill">Fluid Dynamics</span>
+                    <div class="exp-titles">
+                        <h2>Engineering</h2>
+                        <h3>Core Competencies</h3>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="eng-section right-align" id="eng-sec-nasa">
-            <div class="eng-card">
+            <div class="eng-card" onclick="openModal('01 / Aerospace', 'NASA', 'Pathways Design Engineer', 'Designed and verified fluid systems for vehicle purge. Using fluid modeling software, analyzed airflow dynamics within the vehicle to ensure thermal and pressure stability during launch sequences.', [], 'https://placehold.co/100x100/111/eee?text=NASA')">
                 <span class="eng-tag">01 / Aerospace</span>
-                <div class="exp-header"><h2>NASA</h2><h3>Pathways Design Engineer</h3></div>
-                <p>Designed and verified fluid systems for vehicle purge. Using fluid modeling software, analyzed airflow dynamics within the vehicle to ensure thermal and pressure stability during launch sequences.</p>
+                <div class="exp-header">
+                    <div class="exp-logo"><img src="https://placehold.co/100x100/111/eee?text=NASA" alt="NASA Logo"></div>
+                    <div class="exp-titles">
+                        <h2>NASA</h2>
+                        <h3>Pathways Design Engineer</h3>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="eng-section left-align" id="eng-sec-tesla">
-            <div class="eng-card">
+            <div class="eng-card" onclick="openModal('02 / Energy', 'Tesla', 'Cell Reliability Engineering', 'Supported the development and testing of next-generation battery cells for Model 3 and Model Y. Analyzed thermal degradation and charge-cycle limits to maximize lifespan and safety.', [], 'https://placehold.co/100x100/111/eee?text=Tesla')">
                 <span class="eng-tag">02 / Energy</span>
-                <div class="exp-header"><h2>Tesla</h2><h3>Cell Reliability Engineering</h3></div>
-                <p>Supported the development and testing of next-generation battery cells for Model 3 and Model Y. Analyzed thermal degradation and charge-cycle limits to maximize lifespan and safety.</p>
+                <div class="exp-header">
+                    <div class="exp-logo"><img src="https://placehold.co/100x100/111/eee?text=Tesla" alt="Tesla Logo"></div>
+                    <div class="exp-titles">
+                        <h2>Tesla</h2>
+                        <h3>Cell Reliability Engineering</h3>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="eng-section right-align" id="eng-sec-google">
-            <div class="eng-card">
+            <div class="eng-card" onclick="openModal('03 / Consumer Hardware', 'Google', 'Hardware Reliability', 'Worked on the Pixel Buds engineering team focusing on audio fidelity and hardware reliability. Developed automated testing suites to simulate extreme wear-and-tear.', [], 'https://placehold.co/100x100/111/eee?text=Google')">
                 <span class="eng-tag">03 / Consumer Hardware</span>
-                <div class="exp-header"><h2>Google</h2><h3>Hardware Reliability</h3></div>
-                <p>Worked on the Pixel Buds engineering team focusing on audio fidelity and hardware reliability. Developed automated testing suites to simulate extreme wear-and-tear.</p>
+                <div class="exp-header">
+                    <div class="exp-logo"><img src="https://placehold.co/100x100/111/eee?text=Google" alt="Google Logo"></div>
+                    <div class="exp-titles">
+                        <h2>Google</h2>
+                        <h3>Hardware Reliability</h3>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="eng-section left-align" id="eng-sec-ge">
-            <div class="eng-card">
+            <div class="eng-card" onclick="openModal('04 / IoT Devices', 'GE Appliances', 'Mechanical Engineering', 'Engineered core functionalities for smart coffee machines. Improved brewing algorithms and enhanced IoT connectivity for remote appliance management.', [], 'https://placehold.co/100x100/111/eee?text=GE')">
                 <span class="eng-tag">04 / IoT Devices</span>
-                <div class="exp-header"><h2>GE Appliances</h2><h3>Mechanical Engineering</h3></div>
-                <p>Engineered core functionalities for smart coffee machines. Improved brewing algorithms and enhanced IoT connectivity for remote appliance management.</p>
+                <div class="exp-header">
+                    <div class="exp-logo"><img src="https://placehold.co/100x100/111/eee?text=GE" alt="GE Logo"></div>
+                    <div class="exp-titles">
+                        <h2>GE Appliances</h2>
+                        <h3>Mechanical Engineering</h3>
+                    </div>
+                </div>
             </div>
         </div>
         
         <div class="eng-section right-align" id="eng-sec-school">
-            <div class="eng-card">
+            <div class="eng-card" onclick="openModal('05 / Academic Research', 'UCF Robotics', 'Lead Engineer', 'Designed and implemented autonomous navigation systems using SLAM algorithms in C++ and Python. Published research on efficiency metrics in neural networks.', [], 'https://placehold.co/100x100/111/eee?text=UCF')">
                 <span class="eng-tag">05 / Academic Research</span>
-                <div class="exp-header"><h2>UCF Robotics</h2><h3>Lead Engineer</h3></div>
-                <p>Designed and implemented autonomous navigation systems using SLAM algorithms in C++ and Python. Published research on efficiency metrics in neural networks.</p>
+                <div class="exp-header">
+                    <div class="exp-logo"><img src="https://placehold.co/100x100/111/eee?text=UCF" alt="UCF Logo"></div>
+                    <div class="exp-titles">
+                        <h2>UCF Robotics</h2>
+                        <h3>Lead Engineer</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- MUSIC REALM -->
-    <div id="music-scroll-container">
-        <div id="music-scroll-track"></div>
-        <h1 class="music-title-bg">SOUND</h1>
-        <div class="music-cards-viewport">
-            <div class="music-cards-wrapper" id="music-cards-wrapper">
-                <!-- Albums populated by JS -->
-                <div class="music-card"><img src="https://placehold.co/400x400/222/888?text=Harry+Styles" class="album-cover"><div class="artist-name">Harry Styles</div></div>
-                <div class="music-card"><img src="https://placehold.co/400x400/222/888?text=BTS" class="album-cover"><div class="artist-name">BTS</div></div>
-                <div class="music-card"><img src="https://placehold.co/400x400/222/888?text=Adele" class="album-cover"><div class="artist-name">Adele</div></div>
-                <div class="music-card"><img src="https://placehold.co/400x400/222/888?text=Ariana+Grande" class="album-cover"><div class="artist-name">Ariana Grande</div></div>
-                <div class="music-card"><img src="https://placehold.co/400x400/222/888?text=Frank+Ocean" class="album-cover"><div class="artist-name">Frank Ocean</div></div>
-                <div class="music-card"><img src="https://placehold.co/400x400/222/888?text=Sabrina+Carpenter" class="album-cover"><div class="artist-name">Sabrina Carpenter</div></div>
+    <!-- Experience Popup Modal -->
+    <div id="eng-modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <span class="eng-tag" id="modal-tag">Tag</span>
+            <div class="exp-header">
+                <div class="exp-logo"><img id="modal-logo" src="" alt="Logo"></div>
+                <div class="exp-titles">
+                    <h2 id="modal-company">Company</h2>
+                    <h3 id="modal-title">Job Title</h3>
+                </div>
+            </div>
+            <p class="modal-desc" id="modal-desc">Description goes here.</p>
+            <div class="tech-list" id="modal-tech"></div>
+            
+            <div class="modal-photos">
+                <div class="photo-slot">Upload Photo 1</div>
+                <div class="photo-slot">Upload Photo 2</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MUSIC REALM (Record Store UI) -->
+    <div id="music-realm-ui">
+        <h1 class="music-title-bg">SOUND<br>ROOM</h1>
+        
+        <!-- Floating picture frame (for you to upload a photo) -->
+        <div class="floating-music-photo">
+            <img src="https://placehold.co/600x800/222/555?text=Your+Photo+Here" alt="Lounge Picture">
+        </div>
+
+        <div class="vinyl-crate-container">
+            <div class="vinyl-grid" id="vinyl-grid">
+                <!-- Vinyl records injected via JS -->
             </div>
         </div>
     </div>
@@ -516,9 +659,16 @@
                     <p class="prompt-answer">Intuition, craft, and strategy. I believe the best engineering doesn't just work—it feels effortless to the end user. I strive to build systems that are as aesthetically thoughtful as they are technically sound.</p>
                 </div>
             </div>
+
+            <!-- 4 Photo Grid Section for About Page -->
+            <div class="about-photo-grid">
+                <div class="photo-slot"><img src="https://placehold.co/500x500/ccc/555?text=Photo+1" alt="Dena Attar 1"></div>
+                <div class="photo-slot"><img src="https://placehold.co/500x500/ccc/555?text=Photo+2" alt="Dena Attar 2"></div>
+                <div class="photo-slot"><img src="https://placehold.co/500x500/ccc/555?text=Photo+3" alt="Dena Attar 3"></div>
+                <div class="photo-slot"><img src="https://placehold.co/500x500/ccc/555?text=Photo+4" alt="Dena Attar 4"></div>
+            </div>
         </div>
     </div>
-
 
     <script>
         gsap.registerPlugin(ScrollTrigger);
@@ -537,50 +687,79 @@
             document.getElementById('local-clock').innerText = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }, 1000);
 
+        // --- Mobile Menu Logic ---
+        const hamBtn = document.getElementById('hamburger-btn');
+        const mobMenu = document.getElementById('mobile-menu');
+        
+        hamBtn.addEventListener('click', () => {
+            hamBtn.classList.toggle('open');
+            mobMenu.classList.toggle('active');
+        });
+        function closeMobileMenu() {
+            hamBtn.classList.remove('open');
+            mobMenu.classList.remove('active');
+        }
+
+        // --- Modal Logic ---
+        function openModal(tag, comp, title, desc, techArray, logoUrl) {
+            document.getElementById('modal-tag').innerText = tag;
+            document.getElementById('modal-company').innerText = comp;
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerText = desc;
+            document.getElementById('modal-logo').src = logoUrl;
+            
+            const techContainer = document.getElementById('modal-tech');
+            techContainer.innerHTML = '';
+            if (techArray && techArray.length > 0) {
+                techArray.forEach(tech => {
+                    const span = document.createElement('span');
+                    span.className = 'tech-pill'; span.innerText = tech;
+                    techContainer.appendChild(span);
+                });
+            }
+            document.getElementById('eng-modal').classList.add('active');
+        }
+        function closeModal() { document.getElementById('eng-modal').classList.remove('active'); }
+
         // --- Audio Player Logic ---
         const audioEl = document.getElementById('bg-audio');
         const playBtn = document.getElementById('play-btn');
         const iconPlay = document.getElementById('icon-play');
         const iconPause = document.getElementById('icon-pause');
         const visBars = document.querySelectorAll('.visualizer-bar');
-        let isPlaying = false;
-        let visInterval;
+        const trackLabel = document.querySelector('.track-label');
+        const trackName = document.querySelector('.track-name');
+        
+        let isPlaying = false; let visInterval;
 
-        playBtn.addEventListener('click', () => {
+        function toggleAudio() {
             isPlaying = !isPlaying;
             if (isPlaying) {
-                // audioEl.play(); // Uncomment when actual src is provided
+                if (audioEl.src && audioEl.src !== window.location.href) { audioEl.play().catch(e => console.log(e)); }
                 playBtn.classList.add('playing');
                 iconPlay.style.display = 'none'; iconPause.style.display = 'block';
-                // Simulate visualizer
                 visInterval = setInterval(() => {
-                    visBars.forEach(bar => {
-                        bar.style.height = (4 + Math.random() * 12) + 'px';
-                    });
+                    visBars.forEach(bar => { bar.style.height = (4 + Math.random() * 12) + 'px'; });
                 }, 100);
             } else {
-                // audioEl.pause(); // Uncomment when actual src is provided
+                audioEl.pause();
                 playBtn.classList.remove('playing');
                 iconPlay.style.display = 'block'; iconPause.style.display = 'none';
                 clearInterval(visInterval);
                 visBars.forEach(bar => bar.style.height = '2px');
             }
-        });
+        }
+        playBtn.addEventListener('click', toggleAudio);
 
-        // --- Config & Navigation State ---
-        const REALMS = {
-            engineering: { target: { x: 0, y: 0, z: -70 }, uiId: 'engineering-scroll-container' },
-            music: { target: { x: 100, y: 0, z: -70 }, uiId: 'music-scroll-container' },
-            aboutme: { target: { x: 0, y: 0, z: -30 }, uiId: 'aboutme-container' }
-        };
-        let activeRealm = null;
-        let isTransitioning = false;
-        const homeScrollUI = document.getElementById('home-scroll-container');
-        let mouseX = 0; let mouseY = 0;
+        // --- STREAMING_CHUNK:ThreeJS Scene Setup & Themes... ---
+        const themeBtn = document.getElementById('theme-toggle');
+        let isLightMode = true; // Started as true now!
+        const orbitRings = []; 
 
         const container = document.getElementById('webgl-container');
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x0a0a0b, 0.012); // Deep editorial dark fog
+        // Initialize scene with Light Mode fog color
+        scene.fog = new THREE.FogExp2(0xf5f5f3, 0.012); 
 
         const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.set(0, 0, 45); 
@@ -590,7 +769,7 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        // Subdued, elegant particles instead of bright stars
+        // Light mode particles color initially
         const particleCount = 1500;
         const particlesGeometry = new THREE.BufferGeometry();
         const particlesPos = new Float32Array(particleCount * 3);
@@ -600,183 +779,197 @@
             particlesPos[i*3+2] = (Math.random() - 0.5) * 150;
         }
         particlesGeometry.setAttribute('position', new THREE.BufferAttribute(particlesPos, 3));
-        const particlesMesh = new THREE.Points(particlesGeometry, new THREE.PointsMaterial({ color: 0x8a8a88, size: 0.08, transparent: true, opacity: 0.4 }));
+        const particlesMesh = new THREE.Points(particlesGeometry, new THREE.PointsMaterial({ color: 0x1a1a1c, size: 0.08, transparent: true, opacity: 0.4 }));
         scene.add(particlesMesh);
 
-        // ==========================================
-        // 1. SCENE: SOLAR SYSTEM (HOME)
-        // ==========================================
         const solarSystemGroup = new THREE.Group();
-        solarSystemGroup.rotation.x = 0.8; // Flatter, more elegant angle
-        scene.add(solarSystemGroup);
+        solarSystemGroup.rotation.x = 0.8; scene.add(solarSystemGroup);
 
-        // The Sun: Warm, architectural glow instead of neon magenta
+        // Light mode sun colors initially
         const sunMat = new THREE.MeshStandardMaterial({
-            color: 0xffffff, emissive: 0xd9aa75, emissiveIntensity: 0.8,
-            roughness: 0.4, metalness: 0.1
+            color: 0xff3b30, emissive: 0xff2fc7, emissiveIntensity: 0.8, roughness: 0.4, metalness: 0.1
         });
         const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(3, 64, 64), sunMat);
         solarSystemGroup.add(sunMesh);
 
-        // Soft ambient aura around the sun
-        const centerGlow = new THREE.Mesh(new THREE.SphereGeometry(3.8, 32, 32), new THREE.MeshBasicMaterial({ color: 0xd9aa75, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending, side: THREE.BackSide }));
+        const centerGlow = new THREE.Mesh(new THREE.SphereGeometry(3.8, 32, 32), new THREE.MeshBasicMaterial({ color: 0xff2fc7, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, side: THREE.BackSide }));
         solarSystemGroup.add(centerGlow);
 
-        const sunLight = new THREE.PointLight(0xffeacc, 2.5, 120);
+        const sunLight = new THREE.PointLight(0xffd23f, 2.5, 120);
         solarSystemGroup.add(sunLight);
         solarSystemGroup.add(new THREE.AmbientLight(0x222225, 1.5));
 
         const planets = [];
         const planetData = [
-            { name: 'Engineering', color: 0x444444, radius: 1.2, distance: 12, speed: 0.003, id: 'engineering' },
-            { name: 'Music', color: 0x333333, radius: 1.0, distance: 18, speed: 0.002, id: 'music' }
+            { name: 'Engineering', color: 0xe74c3c, radius: 1.2, distance: 12, speed: 0.003, id: 'engineering' },
+            { name: 'Music', color: 0x9b59b6, radius: 1.0, distance: 18, speed: 0.002, id: 'music' }
         ];
 
         planetData.forEach((data) => {
-            // Matte, sophisticated materials
-            const mat = new THREE.MeshStandardMaterial({ 
-                color: data.color, roughness: 0.7, metalness: 0.2,
-                emissive: 0xffffff, emissiveIntensity: 0.02
-            });
+            const mat = new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.7, metalness: 0.2, emissive: 0xffffff, emissiveIntensity: 0.2 });
             const mesh = new THREE.Mesh(new THREE.SphereGeometry(data.radius, 64, 64), mat);
             
-            // Subdued orbital rings
-            const ringMesh = new THREE.Mesh(new THREE.RingGeometry(data.distance - 0.02, data.distance + 0.02, 64), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.05, side: THREE.DoubleSide }));
-            ringMesh.rotation.x = Math.PI / 2; solarSystemGroup.add(ringMesh);
+            // Rings black initially for light mode visibility
+            const ringMesh = new THREE.Mesh(new THREE.RingGeometry(data.distance - 0.02, data.distance + 0.02, 64), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, side: THREE.DoubleSide }));
+            ringMesh.rotation.x = Math.PI / 2; solarSystemGroup.add(ringMesh); orbitRings.push(ringMesh);
 
             const labelEl = document.createElement('div'); labelEl.className = 'planet-label'; labelEl.innerText = data.name;
             document.getElementById('planet-labels-container').appendChild(labelEl);
-
             solarSystemGroup.add(mesh);
             planets.push({ mesh, data, angle: Math.random() * Math.PI * 2, labelEl: labelEl });
         });
 
-        // Sun label ("About")
         const sunLabelEl = document.createElement('div'); sunLabelEl.className = 'planet-label'; sunLabelEl.innerText = 'About';
         document.getElementById('planet-labels-container').appendChild(sunLabelEl);
         planets.push({ mesh: sunMesh, data: { name: 'About', radius: 3, distance: 0, speed: 0, id: 'aboutme' }, angle: 0, labelEl: sunLabelEl });
 
-        // Scroll parallax for home page
-        ScrollTrigger.create({
-            trigger: ".contact-section", scroller: "#home-scroll-container", start: "top 100%", end: "top 0%", scrub: true,
-            onUpdate: (self) => { if (!activeRealm && !isTransitioning) { solarSystemGroup.position.y = self.progress * 25; solarSystemGroup.position.z = self.progress * -15; } }
+        themeBtn.addEventListener('click', () => {
+            isLightMode = !isLightMode;
+            document.body.classList.toggle('dark-mode');
+            
+            if (isLightMode) {
+                // Switching to Light Mode
+                scene.fog.color.setHex(0xf5f5f3); particlesMesh.material.color.setHex(0x1a1a1c);
+                planets.forEach(p => {
+                    if (p.data.id === 'engineering') { p.mesh.material.color.setHex(0xe74c3c); p.mesh.material.emissiveIntensity = 0.2; }
+                    if (p.data.id === 'music') { p.mesh.material.color.setHex(0x9b59b6); p.mesh.material.emissiveIntensity = 0.2; }
+                });
+                sunMat.color.setHex(0xff3b30); sunMat.emissive.setHex(0xff2fc7); sunLight.color.setHex(0xffd23f);
+                centerGlow.material.color.setHex(0xff2fc7); centerGlow.material.opacity = 0.4;
+                orbitRings.forEach(r => r.material.color.setHex(0x000000));
+            } else {
+                // Switching to Dark Mode
+                scene.fog.color.setHex(0x0a0a0b); particlesMesh.material.color.setHex(0x8a8a88);
+                planets.forEach(p => {
+                    if (p.data.id === 'engineering') { p.mesh.material.color.setHex(0x444444); p.mesh.material.emissiveIntensity = 0.02; }
+                    if (p.data.id === 'music') { p.mesh.material.color.setHex(0x333333); p.mesh.material.emissiveIntensity = 0.02; }
+                });
+                sunMat.color.setHex(0xffffff); sunMat.emissive.setHex(0xd9aa75); sunLight.color.setHex(0xffeacc);
+                centerGlow.material.color.setHex(0xd9aa75); centerGlow.material.opacity = 0.15;
+                orbitRings.forEach(r => r.material.color.setHex(0xffffff));
+            }
         });
 
+        // --- STREAMING_CHUNK:ScrollTriggers and Realm Setup... ---
+        const telemetryDock = document.getElementById('telemetry-dock');
 
-        // ==========================================
-        // 2. ENGINEERING REALM (Abstract geometric shapes representing tech)
-        // ==========================================
+        // Scroll parallax for home page & Telemetry fade
+        ScrollTrigger.create({
+            trigger: ".contact-section", scroller: "#home-scroll-container", start: "top 100%", end: "top 0%", scrub: true,
+            onUpdate: (self) => { 
+                if (!activeRealm && !isTransitioning) { 
+                    solarSystemGroup.position.y = self.progress * 25; 
+                    solarSystemGroup.position.z = self.progress * -15; 
+                    telemetryDock.style.opacity = Math.max(0, 1 - (self.progress * 3));
+                } 
+            }
+        });
+
+        // Engineering Realm Group (Hidden initially)
         const engineeringGroup = new THREE.Group();
         engineeringGroup.position.set(0, 0, -80); engineeringGroup.visible = false;
         scene.add(engineeringGroup);
-        engineeringGroup.add(new THREE.AmbientLight(0x223344, 1));
+        engineeringGroup.add(new THREE.AmbientLight(0xffffff, 0.8));
         const engSpot = new THREE.SpotLight(0xd9aa75, 4); engSpot.position.set(10, 20, 10); engineeringGroup.add(engSpot);
 
-        // A large, slow-rotating architectural torus knot to represent complex engineering systems
-        const engCore = new THREE.Mesh(
-            new THREE.TorusKnotGeometry(6, 1.5, 200, 32), 
-            new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2, wireframe: true, transparent: true, opacity: 0.3 })
-        );
-        engineeringGroup.add(engCore);
-
-        // Scroll logic for engineering
+        const engCore = new THREE.Mesh(new THREE.TorusKnotGeometry(4, 1.2, 150, 32), new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2, wireframe: true, transparent: true, opacity: 0.4 }));
+        engCore.position.set(6, 0, 0); engineeringGroup.add(engCore);
+        
         function updateEngineeringScene(progress) {
-            const timelineLine = document.getElementById('eng-timeline-line');
-            if (progress > 0.02 && progress < 0.98) {
-                timelineLine.style.display = 'block';
-            } else {
-                timelineLine.style.display = 'none';
-            }
-            // Rotate the core based on scroll
             engCore.rotation.y = progress * Math.PI * 2;
-            engCore.rotation.x = progress * Math.PI;
+            const timelineLine = document.getElementById('eng-timeline-line');
+            if (progress > 0.02 && progress < 0.98) { timelineLine.style.display = 'block'; } else { timelineLine.style.display = 'none'; }
         }
+        ScrollTrigger.create({ trigger: "#eng-scroll-track", scroller: "#engineering-scroll-container", start: "top top", end: "bottom bottom", scrub: true, onUpdate: (self) => updateEngineeringScene(self.progress) });
 
-        ScrollTrigger.create({
-            trigger: "#eng-scroll-track", scroller: "#engineering-scroll-container", start: "top top", end: "bottom bottom", scrub: true,
-            onUpdate: (self) => updateEngineeringScene(self.progress)
-        });
+        // Music Realm Group (Hidden initially)
+        const musicGroup = new THREE.Group();
+        musicGroup.position.set(100, -2, -80); musicGroup.visible = false; scene.add(musicGroup);
+        musicGroup.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const musicSpot = new THREE.SpotLight(0xd9aa75, 4); musicSpot.position.set(-5, 15, 5); musicSpot.angle = Math.PI / 4; musicGroup.add(musicSpot);
+        
+        const recordPlayerGroup = new THREE.Group(); recordPlayerGroup.position.set(3, 0, 0); recordPlayerGroup.rotation.set(Math.PI / 8, -Math.PI / 6, 0); musicGroup.add(recordPlayerGroup);
+        const plinth = new THREE.Mesh(new THREE.BoxGeometry(10, 0.8, 8), new THREE.MeshStandardMaterial({ color: 0x111112, roughness: 0.9, metalness: 0.1 })); recordPlayerGroup.add(plinth);
+        const platter = new THREE.Mesh(new THREE.CylinderGeometry(3.8, 3.8, 0.2, 64), new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.4 })); platter.position.set(-0.5, 0.5, 0); recordPlayerGroup.add(platter);
+        
+        const vinylGroup = new THREE.Group(); vinylGroup.position.set(-0.5, 0.61, 0); recordPlayerGroup.add(vinylGroup);
+        vinylGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(3.7, 3.7, 0.05, 64), new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.2, metalness: 0.5 })));
+        const vinylLabelMat = new THREE.MeshBasicMaterial({ color: 0xd9aa75 }); 
+        vinylGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.06, 32), vinylLabelMat));
+        
+        const tonearmPivot = new THREE.Group(); tonearmPivot.position.set(3.5, 1.2, -2.5); recordPlayerGroup.add(tonearmPivot);
+        const armGeo = new THREE.CylinderGeometry(0.06, 0.06, 4.5, 16); armGeo.translate(0, 2.25, 0);
+        const arm = new THREE.Mesh(armGeo, new THREE.MeshStandardMaterial({color: 0xaaaaaa, metalness: 0.9, roughness: 0.2})); arm.rotation.x = -Math.PI / 2; tonearmPivot.add(arm);
 
-        // ==========================================
-        // 3. MUSIC REALM (Cover Flow)
-        // ==========================================
-        function updateMusicCards(progress) {
-            const cards = document.querySelectorAll('.music-card');
-            const focusIndex = progress * (cards.length - 1);
-            cards.forEach((card, i) => {
-                const d = i - focusIndex; 
-                const y = d * 350; 
-                const x = Math.sin(i * 0.5) * 300;
-                const z = Math.cos(i * 0.5) * 200 - 300;
-                let opacity = 1 - Math.abs(d) * 0.3; 
-                if (opacity <= 0) { card.style.display = 'none'; } 
-                else {
-                    card.style.display = 'block';
-                    card.style.transform = `translate3d(${x}px, ${y}px, ${z}px) rotateY(${-x*0.05}deg)`;
-                    card.style.opacity = Math.max(0, opacity);
-                    card.style.zIndex = Math.round(100 - Math.abs(d) * 10);
-                }
+        // --- STREAMING_CHUNK:Music Data and Routing logic... ---
+        const textureLoader = new THREE.TextureLoader();
+        
+        // === ADD MP3 FILES FOR VINYLS HERE ===
+        // Replace the empty string "" in 'audio' with your mp3 file path
+        const vinylData = [
+            { artist: "Harry Styles", track: "As It Was", cover: "https://placehold.co/400x400/ea8f99/fff?text=Harry", audio: "" },
+            { artist: "BTS", track: "Butter", cover: "https://placehold.co/400x400/e6c935/000?text=BTS", audio: "" },
+            { artist: "Adele", track: "Easy On Me", cover: "https://placehold.co/400x400/3d5849/fff?text=Adele", audio: "" },
+            { artist: "Ariana Grande", track: "Positions", cover: "https://placehold.co/400x400/a3ccad/fff?text=Ariana", audio: "" }
+        ];
+
+        const vinylGrid = document.getElementById('vinyl-grid');
+        vinylData.forEach((album) => {
+            const item = document.createElement('div'); item.className = 'vinyl-item';
+            item.innerHTML = `<div class="vinyl-art-wrapper"><img src="${album.cover}" class="vinyl-sleeve" alt="${album.artist}"><div class="vinyl-disc"></div></div>
+                              <div class="vinyl-info"><span class="vinyl-artist">${album.artist}</span><span class="vinyl-track">${album.track}</span></div>`;
+            item.addEventListener('click', () => {
+                trackLabel.innerText = "Now Playing"; trackName.innerText = album.track;
+                if(album.audio) { audioEl.src = album.audio; if (!isPlaying) toggleAudio(); else audioEl.play().catch(e=>console.log(e)); }
+                textureLoader.load(album.cover, (tex) => { vinylLabelMat.map = tex; vinylLabelMat.color.setHex(0xffffff); vinylLabelMat.needsUpdate = true; });
+                gsap.killTweensOf(tonearmPivot.rotation); gsap.to(tonearmPivot.rotation, { y: 0.45, duration: 1.5, ease: "power2.out" });
             });
-        }
-        ScrollTrigger.create({
-            trigger: "#music-scroll-track", scroller: "#music-scroll-container", start: "top top", end: "bottom bottom", scrub: true,
-            onUpdate: (self) => updateMusicCards(self.progress)
-        });
-        updateMusicCards(0);
-
-
-        // --- Interaction & Mouse Parallax ---
-        const mouse = new THREE.Vector2(-999, -999);
-        const raycaster = new THREE.Raycaster();
-        let hoveredPlanet = null;
-        const planetVec = new THREE.Vector3(); 
-
-        window.addEventListener('mousemove', (e) => {
-            if (isTransitioning) return;
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-            mouseX = mouse.x; mouseY = mouse.y;
+            vinylGrid.appendChild(item);
         });
 
-        window.addEventListener('click', () => {
-            if (hoveredPlanet && !isTransitioning && !activeRealm && homeScrollUI.scrollTop < window.innerHeight * 0.3) {
-                triggerRealmDive(hoveredPlanet.data.id);
-            }
-        });
-
-        const backBtn = document.getElementById('back-btn');
-        backBtn.addEventListener('click', returnToOrbit);
-
+        const REALMS = {
+            engineering: { target: { x: 0, y: 0, z: -70 }, uiId: 'engineering-scroll-container' },
+            music: { target: { x: 100, y: 0, z: -70 }, uiId: 'music-realm-ui' },
+            aboutme: { target: { x: 0, y: 0, z: -30 }, uiId: 'aboutme-container' }
+        };
+        let activeRealm = null; let isTransitioning = false;
+        const homeScrollUI = document.getElementById('home-scroll-container');
         const realmGroups = { engineering: engineeringGroup };
 
         function triggerRealmDive(realmId) {
+            if (isTransitioning || activeRealm === realmId) return;
             isTransitioning = true;
-            activeRealm = realmId;
-            document.body.style.cursor = 'default';
-            homeScrollUI.style.cursor = 'default';
-
-            gsap.to(homeScrollUI, { opacity: 0, duration: 0.5 });
-            homeScrollUI.style.pointerEvents = 'none';
+            document.getElementById('top-brand').classList.add('visible');
+            gsap.to(telemetryDock, { opacity: 0, duration: 0.5 }); // Hide dock in realms
 
             const config = REALMS[realmId];
             const targetUI = document.getElementById(config.uiId);
             const planetInfo = planets.find(p => p.data.id === realmId);
-            const targetPos = new THREE.Vector3();
-            planetInfo.mesh.getWorldPosition(targetPos);
+            const targetPos = new THREE.Vector3(); planetInfo.mesh.getWorldPosition(targetPos);
 
-            const tl = gsap.timeline({
-                onComplete: () => {
-                    isTransitioning = false;
+            if (activeRealm !== null) {
+                const prevUI = document.getElementById(REALMS[activeRealm].uiId);
+                gsap.to(prevUI, { opacity: 0, duration: 0.5, onComplete: () => { 
+                    prevUI.style.display = 'none'; 
+                    if (realmGroups[activeRealm]) realmGroups[activeRealm].visible = false;
+                    activeRealm = realmId;
+                    if (realmGroups[realmId]) realmGroups[realmId].visible = true;
+                    camera.position.set(config.target.x, config.target.y, config.target.z + 10);
                     targetUI.style.display = 'block';
-                    if (realmId === 'music') { targetUI.scrollTop = 0; updateMusicCards(0); ScrollTrigger.refresh(); }
-                    else if (realmId === 'engineering') { targetUI.scrollTop = 0; updateEngineeringScene(0); ScrollTrigger.refresh(); } 
-                    else if (realmId === 'aboutme') { targetUI.scrollTop = 0; }
+                    if (realmId === 'engineering') { targetUI.scrollTop = 0; updateEngineeringScene(0); ScrollTrigger.refresh(); } else if (realmId === 'aboutme') { targetUI.scrollTop = 0; }
                     gsap.to(targetUI, { opacity: 1, duration: 1 });
-                    backBtn.style.display = 'block';
-                    gsap.to(backBtn, { opacity: 1, duration: 1 });
-                }
-            });
+                    gsap.to(camera.position, { z: config.target.z, duration: 1.2, ease: "power2.out", onComplete: () => isTransitioning = false });
+                }});
+                return;
+            }
 
+            activeRealm = realmId;
+            gsap.to(homeScrollUI, { opacity: 0, duration: 0.5 }); homeScrollUI.style.pointerEvents = 'none';
+            const tl = gsap.timeline({ onComplete: () => {
+                isTransitioning = false; targetUI.style.display = 'block';
+                if (realmId === 'engineering') { targetUI.scrollTop = 0; updateEngineeringScene(0); ScrollTrigger.refresh(); } else if (realmId === 'aboutme') { targetUI.scrollTop = 0; }
+                gsap.to(targetUI, { opacity: 1, duration: 1 });
+            }});
             tl.to(camera.position, { x: targetPos.x, y: targetPos.y, z: targetPos.z, duration: 1.5, ease: "power2.inOut" });
             tl.add(() => {
                 solarSystemGroup.visible = false;
@@ -787,29 +980,27 @@
         }
 
         function returnToOrbit() {
-            if(isTransitioning) return;
+            if(isTransitioning || !activeRealm) return;
             isTransitioning = true;
-            
+            document.getElementById('top-brand').classList.remove('visible');
+
             const config = REALMS[activeRealm];
             const activeUI = document.getElementById(config.uiId);
-            const planetInfo = planets.find(p => p.data.id === activeRealm);
-            const targetPos = new THREE.Vector3();
-            planetInfo.mesh.getWorldPosition(targetPos);
+            const targetPos = new THREE.Vector3(); planets.find(p => p.data.id === activeRealm).mesh.getWorldPosition(targetPos);
 
-            gsap.to([activeUI, backBtn], {
-                opacity: 0, duration: 0.5, onComplete: () => {
-                    activeUI.style.display = 'none'; backBtn.style.display = 'none';
-                    if(activeUI.scrollTop !== undefined) activeUI.scrollTop = 0;
-                }
-            });
+            gsap.to(activeUI, { opacity: 0, duration: 0.5, onComplete: () => {
+                activeUI.style.display = 'none';
+                if(activeUI.scrollTop !== undefined) activeUI.scrollTop = 0;
+                if(activeRealm === 'music') gsap.to(tonearmPivot.rotation, { y: 0, duration: 1, ease: "power2.inOut" });
+            }});
 
-            const tl = gsap.timeline({
-                onComplete: () => {
-                    isTransitioning = false; activeRealm = null;
-                    homeScrollUI.style.pointerEvents = 'auto'; gsap.to(homeScrollUI, { opacity: 1, duration: 1 });
-                }
-            });
-
+            const tl = gsap.timeline({ onComplete: () => {
+                isTransitioning = false; activeRealm = null;
+                homeScrollUI.style.pointerEvents = 'auto'; gsap.to(homeScrollUI, { opacity: 1, duration: 1 });
+                // Restore telemetry based on home scroll
+                const scrProg = homeScrollUI.scrollTop / window.innerHeight;
+                gsap.to(telemetryDock, { opacity: Math.max(0, 1 - (scrProg * 3)), duration: 1 });
+            }});
             tl.to(camera.position, { z: config.target.z + 10, duration: 1, ease: "power2.in" });
             tl.add(() => {
                 solarSystemGroup.visible = true;
@@ -819,91 +1010,74 @@
             tl.to(camera.position, { x: 0, y: 0, z: 45, duration: 1.5, ease: "power2.out" });
         }
 
+        // --- STREAMING_CHUNK:Animation Loop... ---
+        const mouse = new THREE.Vector2(-999, -999);
+        const raycaster = new THREE.Raycaster();
+        let hoveredPlanet = null; const planetVec = new THREE.Vector3();
+        let mouseX = 0; let mouseY = 0;
+
+        window.addEventListener('mousemove', (e) => {
+            if(isTransitioning) return;
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1; mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            mouseX = mouse.x; mouseY = mouse.y;
+        });
+        window.addEventListener('click', () => {
+            if (hoveredPlanet && !isTransitioning && !activeRealm && homeScrollUI.scrollTop < window.innerHeight * 0.3) { triggerRealmDive(hoveredPlanet.data.id); }
+        });
+
         function animate() {
             requestAnimationFrame(animate);
             const t = Date.now() * 0.001;
 
-            particlesMesh.rotation.y += 0.0005; 
-            particlesMesh.rotation.x += 0.0002;
+            particlesMesh.rotation.y += 0.0005; particlesMesh.rotation.x += 0.0002;
 
             if (activeRealm === 'engineering' || isTransitioning) {
-                // Subtle ambient movement
                 engineeringGroup.rotation.y = Math.sin(t * 0.5) * 0.05 + mouseX * 0.05;
                 engineeringGroup.rotation.x = Math.cos(t * 0.5) * 0.05 + mouseY * 0.05;
             }
+            if (activeRealm === 'music' && isPlaying) { vinylGroup.rotation.y += 0.02; }
 
             if (!activeRealm && !isTransitioning && homeScrollUI.scrollTop < window.innerHeight * 0.3) {
                 planets.forEach(p => {
                     if (p.data.id !== 'aboutme') {
                         p.angle += p.data.speed;
-                        p.mesh.position.x = Math.cos(p.angle) * p.data.distance;
-                        p.mesh.position.z = Math.sin(p.angle) * p.data.distance;
+                        p.mesh.position.x = Math.cos(p.angle) * p.data.distance; p.mesh.position.z = Math.sin(p.angle) * p.data.distance;
                         p.mesh.rotation.y += 0.01;
                     }
-                    
-                    p.mesh.getWorldPosition(planetVec);
-                    planetVec.y += p.data.radius + 1.2; 
-                    planetVec.project(camera);
-                    
-                    const x = (planetVec.x * .5 + .5) * window.innerWidth;
-                    const y = (planetVec.y * -.5 + .5) * window.innerHeight;
-                    
-                    if (planetVec.z < 1) {
-                        p.labelEl.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
-                        p.labelEl.style.opacity = '1';
-                    } else { p.labelEl.style.opacity = '0'; }
+                    p.mesh.getWorldPosition(planetVec); planetVec.y += p.data.radius + 1.2; planetVec.project(camera);
+                    const x = (planetVec.x * .5 + .5) * window.innerWidth; const y = (planetVec.y * -.5 + .5) * window.innerHeight;
+                    if (planetVec.z < 1) { p.labelEl.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`; p.labelEl.style.opacity = '1'; } else { p.labelEl.style.opacity = '0'; }
                 });
 
                 raycaster.setFromCamera(mouse, camera);
                 const intersects = raycaster.intersectObjects(planets.map(p => p.mesh));
-
                 if (intersects.length > 0) {
                     const intersectedMesh = intersects[0].object;
                     if (!hoveredPlanet || hoveredPlanet.mesh !== intersectedMesh) {
-                        if (hoveredPlanet) {
-                            gsap.to(hoveredPlanet.mesh.scale, {x:1, y:1, z:1, duration: 0.3});
-                            if (hoveredPlanet.data.id !== 'aboutme') gsap.to(hoveredPlanet.mesh.material.emissive, {intensity: 0.02, duration: 0.3});
-                        }
+                        if (hoveredPlanet) { gsap.to(hoveredPlanet.mesh.scale, {x:1, y:1, z:1, duration: 0.3}); }
                         hoveredPlanet = planets.find(p => p.mesh === intersectedMesh);
                         document.body.style.cursor = 'pointer'; homeScrollUI.style.cursor = 'pointer';
-                        
                         gsap.to(hoveredPlanet.mesh.scale, {x:1.15, y:1.15, z:1.15, duration: 0.3});
-                        if (hoveredPlanet.data.id !== 'aboutme') gsap.to(hoveredPlanet.mesh.material.emissive, {intensity: 0.3, duration: 0.3});
                     }
                 } else if (hoveredPlanet) {
                     gsap.to(hoveredPlanet.mesh.scale, {x:1, y:1, z:1, duration: 0.3});
-                    if (hoveredPlanet.data.id !== 'aboutme') gsap.to(hoveredPlanet.mesh.material.emissive, {intensity: 0.02, duration: 0.3});
-                    hoveredPlanet = null;
-                    document.body.style.cursor = 'default'; homeScrollUI.style.cursor = 'default';
+                    hoveredPlanet = null; document.body.style.cursor = 'default'; homeScrollUI.style.cursor = 'default';
                 }
             } else {
-                if (hoveredPlanet) { 
-                    hoveredPlanet.mesh.scale.set(1, 1, 1); 
-                    if (hoveredPlanet.data.id !== 'aboutme') hoveredPlanet.mesh.material.emissiveIntensity = 0.02;
-                    hoveredPlanet = null; 
-                }
+                if (hoveredPlanet) { hoveredPlanet.mesh.scale.set(1, 1, 1); hoveredPlanet = null; }
                 document.body.style.cursor = 'default'; homeScrollUI.style.cursor = 'default';
-
                 planets.forEach(p => {
                     p.labelEl.style.opacity = '0'; 
                     if(!activeRealm && !isTransitioning && p.data.id !== 'aboutme') {
                         p.angle += p.data.speed;
-                        p.mesh.position.x = Math.cos(p.angle) * p.data.distance;
-                        p.mesh.position.z = Math.sin(p.angle) * p.data.distance;
-                        p.mesh.rotation.y += 0.01;
+                        p.mesh.position.x = Math.cos(p.angle) * p.data.distance; p.mesh.position.z = Math.sin(p.angle) * p.data.distance; p.mesh.rotation.y += 0.01;
                     }
                 });
             }
-
             renderer.render(scene, camera);
         }
-
         animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
     </script>
 </body>
 </html>
