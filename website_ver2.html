@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+    <title>Dena Attar — Engineer & Creative</title>
+    <meta name="description" content="Dena Attar is an engineer and creative building thoughtful physical and digital systems — from fluid dynamics at NASA to hardware reliability at Google.">
+    <meta property="og:title" content="Dena Attar — Engineer & Creative">
+    <meta property="og:description" content="Engineer and creative building thoughtful physical and digital systems — from NASA to Tesla to Google.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://denaattar.com">
+    <!-- TODO: add og:image once a real hero/preview image is available -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Dena Attar — Engineer & Creative">
+    <meta name="twitter:description" content="Engineer and creative building thoughtful physical and digital systems.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@100..800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+        :root {
+            /* Light Mode Default */
+            --bg-dark: #f5f5f3;
+            --text-main: #0a0a0b;
+            --text-muted: #666664;
+            --accent-warm: #e74c3c; 
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            
+            --font-sans: 'Inter', sans-serif;
+            --font-serif: 'Instrument Serif', serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        body.dark-mode {
+            --bg-dark: #000000; /* True black */
+            --text-main: #f0f0ed;
+            --text-muted: #7a7a78;
+            --accent-warm: #ff8c00; /* Dark orange, echoes the sun */
+            --glass-bg: rgba(0, 0, 0, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            overflow: hidden; 
+            overscroll-behavior: none;
+            -webkit-font-smoothing: antialiased;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        ::selection {
+            background: var(--accent-warm);
+            color: var(--bg-dark);
+        }
+
+        #webgl-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; pointer-events: none;
+        }
+
+        .top-nav {
+            position: fixed; top: 0; left: 0; width: 100%;
+            padding: 24px 40px; box-sizing: border-box;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 50; pointer-events: none;
+        }
+
+        .header-left {
+            display: flex; align-items: center; gap: 20px;
+            pointer-events: auto;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            pointer-events: auto;
+        }
+
+        .theme-btn {
+            background: transparent; border: none; cursor: pointer;
+            width: 32px; height: 32px; display: flex; justify-content: center; align-items: center;
+            border-radius: 50%; border: 1px solid var(--glass-border);
+            color: var(--text-main); transition: all 0.3s ease;
+        }
+        .theme-btn:hover { background: var(--glass-bg); }
+        .theme-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+        .brand-name {
+            font-family: var(--font-serif);
+            font-size: 1.8rem;
+            font-style: italic;
+            cursor: pointer;
+            transition: color 0.3s ease, opacity 0.5s ease;
+            opacity: 0; 
+            pointer-events: none;
+        }
+        .brand-name.visible {
+            opacity: 1; pointer-events: auto;
+        }
+        .brand-name:hover { color: var(--accent-warm); }
+
+        /* Sleek Audio Pill */
+        .audio-deck {
+            pointer-events: auto; justify-self: end;
+            display: flex; align-items: center; gap: 12px;
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 6px 16px 6px 6px; border-radius: 40px;
+            backdrop-filter: blur(12px); transition: all 0.3s ease;
+        }
+        .audio-deck:hover { border-color: rgba(255, 255, 255, 0.2); }
+
+        .play-btn {
+            width: 36px; height: 36px; background: #0a0a0b; color: #f5f5f3;
+            border: none; border-radius: 50%; display: flex; justify-content: center; align-items: center; 
+            cursor: pointer; flex-shrink: 0; transition: transform 0.2s ease;
+        }
+        body.dark-mode .play-btn { background: #f0f0ed; color: #0a0a0b; }
+        .play-btn:active { transform: scale(0.95); }
+        .play-btn svg { width: 14px; height: 14px; fill: currentColor; margin-left: 2px; }
+        .play-btn.playing svg { margin-left: 0; }
+
+        .track-info { display: flex; flex-direction: column; justify-content: center; }
+        .track-label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; line-height: 1.2; margin-bottom: 2px; }
+        .track-name { font-family: var(--font-sans); font-size: 0.95rem; font-weight: 500; color: var(--text-main); line-height: 1.2; }
+        
+        .visualizer { display: flex; align-items: center; gap: 3px; height: 16px; margin-left: 4px; }
+        .visualizer-bar { width: 4px; height: 4px; background: var(--accent-warm); border-radius: 2px; transition: height 0.1s ease; }
+
+        /* Desktop Nav Styling */
+        .nav-links {
+            pointer-events: auto; display: flex; gap: 24px;
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 10px 24px; border-radius: 40px; backdrop-filter: blur(12px);
+            align-items: center; justify-self: center;
+        }
+        .nav-links a { 
+            font-family: var(--font-sans); font-size: 0.95rem; font-weight: 600; 
+            color: var(--text-main); text-decoration: none; transition: color 0.3s ease; 
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent-warm); }
+
+        .header-right {
+            display: flex; align-items: center; gap: 24px;
+            pointer-events: auto; justify-self: end;
+        }
+
+        .mobile-menu-btn {
+            display: none; pointer-events: auto; background: transparent; border: none; cursor: pointer;
+            width: 32px; height: 32px; align-items: center; justify-content: center;
+            color: var(--text-main); padding: 0; justify-self: end;
+        }
+        .mobile-menu-btn svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+        .mobile-nav-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark); z-index: 100;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 40px;
+            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+        }
+        .mobile-nav-overlay.active { opacity: 1; pointer-events: auto; }
+        .mobile-nav-overlay a { font-family: var(--font-serif); font-size: 3rem; font-style: italic; color: var(--text-main); text-decoration: none; }
+        .mobile-close-btn { position: absolute; top: 30px; right: 30px; background: transparent; border: none; color: var(--text-main); cursor: pointer; }
+        .mobile-close-btn svg { width: 32px; height: 32px; stroke: currentColor; stroke-width: 2; }
+
+        .telemetry-dock {
+            position: fixed; bottom: 40px; left: 40px;
+            pointer-events: none; z-index: 20;
+            display: flex; flex-direction: column; gap: 8px;
+            transition: opacity 0.3s ease;
+        }
+        .tel-item {
+            display: flex; align-items: center; gap: 12px;
+            font-family: var(--font-mono); font-size: 0.75rem;
+            color: var(--text-muted); letter-spacing: 0.05em;
+        }
+        .tel-value { color: var(--text-main); }
+        .tel-indicator {
+            width: 6px; height: 6px; border-radius: 50%; background: #2ecc71;
+            box-shadow: 0 0 8px rgba(46, 204, 113, 0.6); animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .planet-label {
+            position: absolute; top: 0; left: 0;
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 6px 12px; border-radius: 20px; color: var(--text-main);
+            font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em;
+            text-transform: uppercase; pointer-events: none;
+            opacity: 0; backdrop-filter: blur(8px); transition: opacity 0.3s ease;
+        }
+
+        #home-scroll-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            overflow-y: auto; overflow-x: hidden; z-index: 5; scrollbar-width: none; 
+        }
+        #home-scroll-container::-webkit-scrollbar { display: none; } 
+
+        .home-hero {
+            position: relative; width: 100%; height: 100vh;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            pointer-events: none; 
+        }
+
+        .huge-title {
+            font-family: var(--font-serif); font-size: clamp(4rem, 12vw, 15rem);
+            font-weight: 400; font-style: italic; line-height: 0.9; margin: 0;
+            text-align: center; color: var(--text-main); letter-spacing: -0.02em; pointer-events: auto;
+        }
+        .subtitle {
+            font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);
+            letter-spacing: 0.15em; text-transform: uppercase; margin-top: 24px; pointer-events: auto;
+        }
+
+        .explore-hint {
+            position: absolute; bottom: 40px; right: 40px;
+            font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
+            letter-spacing: 0.1em; pointer-events: none; text-align: right;
+        }
+        
+        .home-spacer { height: 60vh; } 
+        
+        .contact-section {
+            min-height: 100vh; display: flex; flex-direction: column; justify-content: flex-end;
+            padding: 8vw 5vw 4vw 5vw; pointer-events: auto; position: relative; z-index: 10;
+        }
+        .contact-header {
+            font-family: var(--font-serif); font-size: clamp(3.5rem, 8vw, 10rem);
+            font-weight: 400; font-style: italic; line-height: 0.9; margin-bottom: 8vh; color: var(--text-main);
+        }
+        .contact-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px;
+            border-top: 1px solid var(--glass-border); padding-top: 40px;
+            font-family: var(--font-sans);
+        }
+        @media (max-width: 768px) { .contact-grid { grid-template-columns: 1fr; gap: 24px; } }
+        
+        .contact-col span { display: block; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; }
+        .contact-col a, .contact-col p { color: var(--text-main); text-decoration: none; font-size: 1.1rem; margin: 0 0 8px 0; transition: color 0.3s; display: block; }
+        .contact-col a:hover { color: var(--accent-warm); }
+        
+        .site-footer {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--glass-border);
+            font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.05em; width: 100%;
+        }
+        @media (max-width: 768px) { .site-footer { flex-direction: column; gap: 16px; align-items: flex-start; } }
+        .site-footer-links { display: flex; gap: 16px; }
+        .site-footer-links a { color: var(--text-main); text-decoration: none; transition: color 0.3s; }
+        .site-footer-links a:hover { color: var(--accent-warm); }
+        .site-footer-sep { opacity: 0.4; }
+
+        #engineering-scroll-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            overflow-y: auto; overflow-x: hidden; z-index: 10; pointer-events: auto;
+            display: none; opacity: 0; scrollbar-width: none;
+        }
+        #engineering-scroll-container::-webkit-scrollbar { display: none; }
+        #eng-scroll-track { position: absolute; top: 0; left: 0; width: 100%; height: 600vh; z-index: 0; }
+
+        .eng-timeline-line {
+            position: fixed; left: 50%; top: 0; width: 1px; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0.15) 80%, rgba(255,255,255,0) 100%);
+            z-index: -1; transform: translateX(-50%); display: none;
+        }
+        @media (max-width: 768px) { .eng-timeline-line { left: 24px; } }
+
+        .eng-section {
+            position: absolute; width: 40%; height: 100vh;
+            display: flex; flex-direction: column; justify-content: center; z-index: 2;
+        }
+        /* Adjusted widths and positions to allow cards to be wider */
+        .eng-section.left-align { left: 5%; width: 50%; }
+        .eng-section.right-align { left: 45%; width: 50%; }
+        @media (max-width: 768px) {
+            .eng-section { width: 85%; height: 42vh; }
+            .eng-section.left-align { left: 7.5%; }
+            .eng-section.right-align { left: 7.5%; }
+        }
+
+        #eng-sec-intro { top: 0vh; }
+        #eng-sec-nasa { top: 100vh; }
+        #eng-sec-tesla { top: 200vh; }
+        #eng-sec-google { top: 300vh; }
+        #eng-sec-ge { top: 400vh; }
+        #eng-sec-school { top: 500vh; }
+
+        @media (max-width: 768px) {
+            #eng-scroll-track { height: 252vh; } /* 6 sections * 42vh — much shorter scroll distance than desktop's 600vh */
+            #eng-sec-intro { top: 0vh; }
+            #eng-sec-nasa { top: 42vh; }
+            #eng-sec-tesla { top: 84vh; }
+            #eng-sec-google { top: 126vh; }
+            #eng-sec-ge { top: 168vh; }
+            #eng-sec-school { top: 210vh; }
+        }
+
+        .eng-card {
+            background: var(--bg-dark); /* Solid background for legibility like the image */
+            border: 1px solid var(--glass-border);
+            padding: 2.5rem; border-radius: 16px;
+            transition: border-color 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+            cursor: pointer; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05); /* Slight shadow */
+        }
+        .eng-card:hover { 
+            border-color: rgba(255, 255, 255, 0.2); 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        @media (max-width: 768px) {
+            .eng-card { padding: 1.25rem; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+            .eng-tag { margin-bottom: 10px; font-size: 0.65rem; }
+            .exp-header { gap: 14px; }
+            .exp-logo { width: 44px; height: 44px; border-radius: 10px; }
+            .exp-header h2 { font-size: 1.5rem; }
+            .exp-header h3 { font-size: 0.7rem; }
+            .eng-desc {
+                font-size: 0.85rem; line-height: 1.4; margin: 10px 0 0 0;
+                display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+            }
+            .tech-list-display { display: none; } /* kept compact on the card — full list still shows in the modal on tap */
+        }
+
+        .eng-tag {
+            font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-warm);
+            letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px; display: block;
+        }
+        .exp-header { display: flex; align-items: center; gap: 20px; }
+        .exp-logo { 
+            width: 64px; height: 64px; border-radius: 12px; overflow: hidden; 
+            border: 1px solid var(--glass-border); flex-shrink: 0; 
+            background: rgba(255, 255, 255, 0.9); display: flex; justify-content: center; align-items: center;
+        }
+        .exp-logo img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+        .exp-titles { display: flex; flex-direction: column; }
+        
+        .exp-header h2 { font-family: var(--font-serif); font-size: 2.5rem; font-style: italic; margin: 0 0 4px 0; color: var(--text-main); font-weight: 400; }
+        .exp-header h3 { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); margin: 0; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* Visible descriptions and tech tags on the card */
+        .eng-desc { 
+            display: block; 
+            font-size: 1.05rem; 
+            line-height: 1.6; 
+            color: var(--text-main); 
+            font-weight: 300; 
+            margin: 20px 0; 
+        }
+        .tech-list-display { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 8px; 
+        }
+        .tech-list-display span { 
+            padding: 4px 12px; 
+            border: 1px solid var(--glass-border); 
+            border-radius: 20px; 
+            font-family: var(--font-mono); 
+            font-size: 0.75rem; 
+            color: var(--text-muted); 
+            background: var(--glass-bg);
+        }
+        
+        /* Hidden raw text lists */
+        .tech-list { display: none; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
+            z-index: 1000; display: none; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; pointer-events: auto; }
+        
+        .modal-content {
+            background: var(--bg-dark); border: 1px solid var(--glass-border);
+            width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto;
+            border-radius: 16px; padding: 40px; position: relative;
+            transform: translateY(20px); transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        @media (max-width: 768px) { .modal-content { padding: 24px; } }
+
+        .modal-close {
+            position: absolute; top: 20px; right: 20px;
+            background: transparent; border: none; color: var(--text-muted);
+            cursor: pointer; padding: 8px; transition: color 0.3s ease;
+        }
+        .modal-close:hover { color: var(--text-main); }
+        .modal-close svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 2; }
+
+        .modal-header { margin-bottom: 24px; }
+        .modal-title { font-family: var(--font-serif); font-size: 3rem; font-style: italic; margin: 0 0 8px 0; font-weight: 400; }
+        .modal-role { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-warm); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
+        .modal-desc { font-size: 1.1rem; line-height: 1.6; color: var(--text-main); font-weight: 300; margin-bottom: 24px; }
+        
+        .modal-tech { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+        .modal-tech span { padding: 4px 12px; border: 1px solid var(--glass-border); border-radius: 20px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); }
+
+        .modal-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) {
+            .modal-photos { gap: 10px; } /* stays 2 columns on mobile per request — just tighter gap */
+            .modal-title { font-size: 2rem; }
+            .modal-desc { font-size: 1rem; margin-bottom: 20px; }
+            .modal-header { margin-bottom: 20px; }
+        }
+        .photo-slot {
+            width: 100%; aspect-ratio: 4/3; background: var(--glass-bg);
+            border: 1px dashed var(--text-muted); border-radius: 12px;
+            display: flex; justify-content: center; align-items: center;
+            color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase;
+        }
+
+        #music-realm-ui {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none; display: none; opacity: 0;
+        }
+        
+        .music-title-bg {
+            position: absolute; top: 40px; right: 5%;
+            font-family: var(--font-serif); font-size: 8vw; font-style: italic;
+            color: rgba(255, 255, 255, 0.03); z-index: 0; pointer-events: none; margin: 0;
+            text-align: right; line-height: 0.8;
+        }
+        body.light-mode .music-title-bg { color: rgba(0, 0, 0, 0.05); }
+
+        .vinyl-crate-container {
+            position: absolute; top: 15vh; left: 5%; width: 45%; max-width: 600px; height: 75vh;
+            pointer-events: auto; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; padding-right: 20px;
+            mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 85%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 85%, transparent 100%);
+        }
+        @media (max-width: 768px) { .vinyl-crate-container { width: 92%; left: 4%; top: 13vh; height: 80vh; padding-right: 8px; } }
+        .vinyl-crate-container::-webkit-scrollbar { display: none; }
+        
+        .vinyl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 40px 20px; padding: 40px 0; }
+        @media (max-width: 768px) { .vinyl-grid { grid-template-columns: repeat(2, 1fr); justify-items: center; } }
+
+        .vinyl-item { position: relative; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+        .vinyl-art-wrapper { position: relative; width: 140px; height: 140px; margin-bottom: 16px; perspective: 800px; }
+        
+        .vinyl-sleeve {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 4px; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            z-index: 3; transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            object-fit: cover; background: #111;
+        }
+        
+        .vinyl-disc {
+            position: absolute; top: 2px; right: 2px; width: 136px; height: 136px;
+            border-radius: 50%; background: #0a0a0a; z-index: 2;
+            box-shadow: inset 0 0 0 4px #1a1a1a, inset 0 0 10px rgba(255,255,255,0.1);
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex; justify-content: center; align-items: center;
+        }
+        .vinyl-disc::after { content: ''; width: 44px; height: 44px; border-radius: 50%; background: var(--accent-warm); border: 2px solid #222; }
+        .vinyl-disc::before { content: ''; position: absolute; width: 8px; height: 8px; background: #000; border-radius: 50%; z-index: 5; }
+
+        .vinyl-item:hover .vinyl-sleeve { transform: translateX(-15px) rotateY(-15deg); box-shadow: 15px 15px 25px rgba(0,0,0,0.6); }
+        .vinyl-item:hover .vinyl-disc { transform: translateX(45px) rotate(90deg); }
+
+        .vinyl-info { text-align: center; width: 100%; }
+        .vinyl-artist { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-warm); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; display: block; }
+        .vinyl-track { font-size: 0.95rem; font-weight: 500; color: var(--text-main); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .floating-music-photo {
+            position: absolute; right: 10%; top: 25vh; width: 30vw; max-width: 400px;
+            aspect-ratio: 4/5; background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 12px; border-radius: 4px; transform: rotate(4deg);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3); pointer-events: auto; z-index: 5;
+        }
+        @media (max-width: 768px) {
+            .floating-music-photo { display: none; } /* hidden on mobile so the record grid gets the full screen */
+        }
+        .floating-music-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 2px; }
+
+        #aboutme-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            overflow-y: auto; overflow-x: hidden; z-index: 10; pointer-events: auto;
+            display: none; opacity: 0; scrollbar-width: none; background: var(--bg-dark); 
+        }
+        #aboutme-container::-webkit-scrollbar { display: none; }
+
+        .aboutme-inner { max-width: 800px; margin: 0 auto; padding: 15vh 5% 10vh 5%; }
+        .about-header { margin-bottom: 80px; }
+        .about-header h1 { font-family: var(--font-serif); font-size: 3.5rem; font-style: italic; font-weight: 400; margin: 0 0 20px 0; }
+        .about-header p { font-size: 1.2rem; color: var(--text-muted); line-height: 1.6; max-width: 600px; margin-bottom: 24px; }
+        
+        .ab-link {
+            color: var(--text-main); text-decoration: underline; text-decoration-color: var(--glass-border);
+            text-underline-offset: 4px; transition: all 0.3s ease; font-weight: 500; cursor: pointer;
+        }
+        .ab-link:hover { color: var(--accent-warm); text-decoration-color: var(--accent-warm); }
+
+        .prompt-lounge { display: flex; flex-direction: column; gap: 32px; }
+        .prompt-card { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 40px; border-radius: 16px; }
+        .prompt-question { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-warm); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; display: block; }
+        .prompt-answer { font-size: 1.1rem; line-height: 1.7; color: var(--text-main); font-weight: 300; margin: 0; }
+
+        .about-photo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
+        @media (max-width: 768px) { .about-photo-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+        .about-photo-grid .photo-slot { aspect-ratio: 1/1; overflow: hidden; border-radius: 8px; }
+        .about-photo-grid img { width: 100%; height: 100%; object-fit: cover; }
+
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-dark); z-index: 9999; display: flex;
+            justify-content: center; align-items: center; transition: opacity 1s ease;
+        }
+        .loading-text { font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.2em; text-transform: uppercase; animation: blink 1.5s infinite; }
+        
+        @media (max-width: 768px) {
+            .top-nav { display: flex; justify-content: space-between; padding: 20px; }
+            .nav-links { display: none; }
+            .mobile-menu-btn { display: flex; }
+            .header-right { gap: 12px; }
+            .audio-deck {
+                padding: 6px; gap: 0; overflow: hidden;
+                transition: padding 0.3s ease, gap 0.3s ease;
+            }
+            .audio-deck .track-info { display: none; } /* full track name/label stay hidden on mobile to keep the deck compact */
+            .audio-deck .visualizer { display: none; }
+            .audio-deck.playing { padding: 6px 14px 6px 6px; gap: 10px; }
+            .audio-deck.playing .visualizer { display: flex; }
+            .about-photo-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 16px; margin-top: -60px; }
+            .eng-section { width: 85%; }
+            .telemetry-dock { left: 20px; bottom: 20px; }
+            .explore-hint { bottom: 20px; right: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-text">Initializing Systems...</div>
+    </div>
+
+    <!-- Background 3D Canvas -->
+    <div id="webgl-container"></div>
+
+    <!-- Planet Hover Labels -->
+    <div id="planet-labels-container"></div>
+
+    <nav class="top-nav">
+        <div class="header-left">
+            <button id="theme-toggle" class="theme-btn">
+                <!-- Moon icon for dark mode -->
+                <svg id="icon-moon" viewBox="0 0 24 24" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"></path></svg>
+                <!-- Sun icon for light mode -->
+                <svg id="icon-sun" viewBox="0 0 24 24" style="display:block;"><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"></circle><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"></line><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"></line><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2"></line><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"></line></svg>
+            </button>
+            <div class="brand-name" id="top-brand" onclick="returnToOrbit()">dena attar.</div>
+        </div>
+        
+        <div class="nav-links">
+            <a href="javascript:void(0)" id="nav-engineering" onclick="triggerRealmDive('engineering')">Work</a>
+            <a href="javascript:void(0)" id="nav-music" onclick="triggerRealmDive('music')">Lounge</a>
+            <a href="javascript:void(0)" id="nav-aboutme" onclick="triggerRealmDive('aboutme')">About</a>
+        </div>
+
+        <div class="header-right">
+            <div class="audio-deck" id="audio-deck">
+                <!-- Hidden audio element for actual music -->
+                <!-- Add your mp3 file here: <audio id="bg-audio" src="path/to/nujabes.mp3" loop></audio> -->
+                <audio id="bg-audio" loop></audio>
+                
+                <button class="play-btn" id="play-btn">
+                    <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="icon-pause" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+                <div class="track-info">
+                    <span class="track-label" id="track-label">Soundroom Mode</span>
+                    <span class="track-name" id="track-name">Studio Ambience</span>
+                </div>
+                <div class="visualizer" id="visualizer">
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                </div>
+            </div>
+
+            <!-- Mobile Hamburger Button -->
+            <button class="mobile-menu-btn" id="mobile-menu-open">
+                    <svg viewBox="0 0 24 24" fill="none"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Navigation Overlay -->
+    <div class="mobile-nav-overlay" id="mobile-nav-menu">
+        <button class="mobile-close-btn" id="mobile-menu-close">
+            <svg viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <a href="javascript:void(0)" onclick="triggerRealmDive('engineering'); closeMobileMenu();">Work</a>
+        <a href="javascript:void(0)" onclick="triggerRealmDive('music'); closeMobileMenu();">Lounge</a>
+        <a href="javascript:void(0)" onclick="triggerRealmDive('aboutme'); closeMobileMenu();">About</a>
+    </div>
+
+    <!-- Engineering Telemetry Dock -->
+    <div class="telemetry-dock" id="telemetry-dock">
+        <div class="tel-item"><span class="tel-label">LOC:</span><span class="tel-value">Earth / Florida</span></div>
+        <div class="tel-item"><span class="tel-label">LCL:</span><span class="tel-value" id="local-clock">00:00</span></div>
+        <div class="tel-item"><div class="tel-indicator"></div><span class="tel-value">Systems Online</span></div>
+    </div>
+
+    <!-- HOME SCREEN OVERLAY -->
+    <div id="home-scroll-container">
+        <div class="home-hero">
+            <h1 class="huge-title">dena attar</h1>
+            <div class="subtitle">Engineer · Developer · Creator</div>
+            <!-- <div class="explore-hint">Interact with the planetary system<br>to explore realms.</div> -->
+            <div class="explore-hint"><span class="point-down">👇</span><br>Scroll down for more info </div>
+        </div>
+
+        <div class="home-spacer"></div>
+
+        <div class="contact-section">
+            <h2 class="contact-header">Let's build<br>something.</h2>
+            <div class="contact-grid">
+                <div class="contact-col">
+                    <span>Contact</span>
+                    <a href="mailto:hello@denaattar.com">hello@denaattar.com</a>
+                </div>
+                <div class="contact-col">
+                    <span>Socials</span>
+                    <!-- TODO: replace # with real profile URLs, e.g. https://linkedin.com/in/... -->
+                    <a href="#" target="_blank" rel="noopener">LinkedIn</a>
+                    <a href="#" target="_blank" rel="noopener">Instagram</a>
+                </div>
+                <div class="contact-col">
+                    <span>Availability</span>
+                    <p>Open for full-time roles & freelance collaborations.</p>
+                </div>
+            </div>
+            
+            <footer class="site-footer">
+                <span class="site-footer-meta">© Dena Attar, 2026</span>
+                <nav class="site-footer-links">
+                    <a href="mailto:hello@denaattar.com">Contact</a>
+                    <span class="site-footer-sep">·</span>
+                    <!-- TODO: real LinkedIn URL -->
+                    <a href="#" target="_blank" rel="noopener">LinkedIn</a>
+                    <span class="site-footer-sep">·</span>
+                    <!-- TODO: link to hosted resume PDF, e.g. Google Drive share link -->
+                    <a href="#" target="_blank" rel="noopener">Resume</a>
+                </nav>
+            </footer>
+        </div>
+    </div>
+
+    <!-- ENGINEERING REALM TIMELINE -->
+    <div id="engineering-scroll-container">
+        <div id="eng-scroll-track"></div>
+        <div class="eng-timeline-line" id="eng-timeline-line"></div>
+        
+        <div class="eng-section left-align" id="eng-sec-intro">
+            <div class="eng-card" onclick="openModal('intro')">
+                <div class="exp-header">
+                    <div class="exp-titles">
+                        <h2>Engineering</h2>
+                        <h3>Core Competencies</h3>
+                    </div>
+                </div>
+                <div class="eng-desc" id="desc-intro">Bridging the gap between hardware reliability and robust software architecture. From optimizing flight systems to building responsive web environments.</div>
+                <div class="tech-list-display">
+                    <span>Python</span><span>C++</span><span>JavaScript</span><span>React</span><span>Three.js</span><span>Fluid Dynamics</span>
+                </div>
+                <div class="tech-list" id="tech-intro">Python,C++,JavaScript,React,Three.js,Fluid Dynamics</div>
+            </div>
+        </div>
+
+        <div class="eng-section right-align" id="eng-sec-nasa">
+            <div class="eng-card" onclick="openModal('nasa')">
+                <span class="eng-tag">01 / Aerospace</span>
+                <div class="exp-header">
+                    <div class="exp-logo"><img src="https://placehold.co/100x100/111/eee?text=NASA" alt="NASA Logo"></div>
+                    <div class="exp-titles">
+                        <h2>NASA</h2>
+                        <h3>Pathways Design Engineer</h3>
+                    </div>
+                </div>
+                <div class="eng-desc" id="desc-nasa">Designed and verified fluid systems for vehicle purge. Using fluid modeling software, analyzed airflow dynamics within the vehicle to ensure thermal and pressure stability during launch sequences.</div>
+                <div class="tech-list-display">
+                    <span>Fluid Dynamics</span><span>Thermal Analysis</span><span>CAD</span><span>Simulation</span>
+                </div>
+                <div class="tech-list" id="tech-nasa">Fluid Dynamics,Thermal Analysis,CAD,Simulation</div>
+            </div>
+        </div>
+
+        <div class="eng-section left-align" id="eng-sec-tesla">
+            <div class="eng-card" onclick="openModal('tesla')">
+                <span class="eng-tag">02 / Energy</span>
+                <div class="exp-header">
+                    <div class="exp-logo"><img src="https://placehold.co/100x100/111/eee?text=Tesla" alt="Tesla Logo"></div>
+                    <div class="exp-titles">
+                        <h2>Tesla</h2>
+                        <h3>Cell Reliability Engineering</h3>
+                    </div>
+                </div>
+                <div class="eng-desc" id="desc-tesla">Supported the development and testing of next-generation battery cells for Model 3 and Model Y. Analyzed thermal degradation and charge-cycle limits to maximize lifespan and safety.</div>
+                <div class="tech-list-display">
+                    <span>Battery Tech</span><span>Thermal Degradation</span><span>Data Analysis</span><span>Hardware Testing</span>
+                </div>
+                <div class="tech-list" id="tech-tesla">Battery Tech,Thermal Degradation,Data Analysis,Hardware Testing</div>
+            </div>
+        </div>
+
+        <div class="eng-section right-align" id="eng-sec-google">
+            <div class="eng-card" onclick="openModal('google')">
+                <span class="eng-tag">03 / Consumer Hardware</span>
+                <div class="exp-header">
+                    <div class="exp-logo"><img src="https://placehold.co/100x100/111/eee?text=Google" alt="Google Logo"></div>
+                    <div class="exp-titles">
+                        <h2>Google</h2>
+                        <h3>Hardware Reliability</h3>
+                    </div>
+                </div>
+                <div class="eng-desc" id="desc-google">Worked on the Pixel Buds engineering team focusing on audio fidelity and hardware reliability. Developed automated testing suites to simulate extreme wear-and-tear.</div>
+                <div class="tech-list-display">
+                    <span>Acoustics</span><span>Automation</span><span>Python</span><span>Hardware Reliability</span>
+                </div>
+                <div class="tech-list" id="tech-google">Acoustics,Automation,Python,Hardware Reliability</div>
+            </div>
+        </div>
+
+        <div class="eng-section left-align" id="eng-sec-ge">
+            <div class="eng-card" onclick="openModal('ge')">
+                <span class="eng-tag">04 / IoT Devices</span>
+                <div class="exp-header">
+                    <div class="exp-logo"><img src="https://placehold.co/100x100/111/eee?text=GE" alt="GE Logo"></div>
+                    <div class="exp-titles">
+                        <h2>GE Appliances</h2>
+                        <h3>Mechanical Engineering</h3>
+                    </div>
+                </div>
+                <div class="eng-desc" id="desc-ge">Engineered core functionalities for smart coffee machines. Improved brewing algorithms and enhanced IoT connectivity for remote appliance management.</div>
+                <div class="tech-list-display">
+                    <span>IoT</span><span>Mechanical Design</span><span>Algorithms</span><span>C++</span>
+                </div>
+                <div class="tech-list" id="tech-ge">IoT,Mechanical Design,Algorithms,C++</div>
+            </div>
+        </div>
+        
+        <div class="eng-section right-align" id="eng-sec-school">
+            <div class="eng-card" onclick="openModal('school')">
+                <span class="eng-tag">05 / Academic Research</span>
+                <div class="exp-header">
+                    <div class="exp-logo"><img src="https://placehold.co/100x100/111/eee?text=UCF" alt="UCF Logo"></div>
+                    <div class="exp-titles">
+                        <h2>UCF Robotics</h2>
+                        <h3>Lead Engineer</h3>
+                    </div>
+                </div>
+                <div class="eng-desc" id="desc-school">Designed and implemented autonomous navigation systems using SLAM algorithms in C++ and Python. Published research on efficiency metrics in neural networks.</div>
+                <div class="tech-list-display">
+                    <span>Robotics</span><span>SLAM</span><span>Machine Learning</span><span>Python</span>
+                </div>
+                <div class="tech-list" id="tech-school">Robotics,SLAM,Machine Learning,Python</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup Modal for Experience Details -->
+    <div class="modal-overlay" id="exp-modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">
+                <svg viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">Company Name</h2>
+                <h3 class="modal-role" id="modal-role">Job Title</h3>
+            </div>
+            <p class="modal-desc" id="modal-desc">Description goes here...</p>
+            <div class="modal-tech" id="modal-tech-list">
+                <!-- Tech pills injected here -->
+            </div>
+            <div class="modal-photos">
+                <!-- Add actual image URLs inside these divs or replace divs with <img> tags later -->
+                <div class="photo-slot">Photo Placeholder 1</div>
+                <div class="photo-slot">Photo Placeholder 2</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MUSIC REALM (Record Store UI) -->
+    <div id="music-realm-ui">
+        <h1 class="music-title-bg">SOUND<br>ROOM</h1>
+        
+        <div class="vinyl-crate-container">
+            <div class="vinyl-grid" id="vinyl-grid">
+                <!-- Vinyl records injected via JS -->
+            </div>
+        </div>
+        
+        <!-- Floating Picture Area for Lounge -->
+        <div class="floating-music-photo">
+            <!-- Replace src with your lounge vibe picture -->
+            <img src="https://placehold.co/400x500/111/eee?text=Lounge+Vibe" alt="Lounge Frame">
+        </div>
+    </div>
+
+    <!-- ABOUT ME (PROMPT LOUNGE) -->
+    <div id="aboutme-container">
+        <div class="aboutme-inner">
+            <!-- About Me 4-Photo Grid -->
+            <div class="about-photo-grid">
+                <!-- Replace these with actual <img src="..."> tags for your photos -->
+                <div class="photo-slot"><img src="https://placehold.co/400x400/222/eee?text=Photo+1" alt="Me 1"></div>
+                <div class="photo-slot"><img src="https://placehold.co/400x400/222/eee?text=Photo+2" alt="Me 2"></div>
+                <div class="photo-slot"><img src="https://placehold.co/400x400/222/eee?text=Photo+3" alt="Me 3"></div>
+                <div class="photo-slot"><img src="https://placehold.co/400x400/222/eee?text=Photo+4" alt="Me 4"></div>
+            </div>
+
+            <div class="about-header">
+                <h1>Hi, I'm Dena.</h1>
+                <p>I am an engineer who enjoys turning complex mechanical problems into clear, thoughtful, and robust physical and digital experiences. My perspective is shaped by hands-on engineering across <a class="ab-link">aerospace</a>, <a class="ab-link">energy</a>, and <a class="ab-link">consumer tech</a>.</p>
+                <p>Most recently, I've worked on fluid systems for vehicle purge at <a class="ab-link">NASA</a> and analyzed thermal degradation at <a class="ab-link">Tesla</a>. I enjoy bringing a creative lens to technical challenges, ensuring that systems are as aesthetically thoughtful as they are mathematically sound.</p>
+            </div>
+
+            <div class="prompt-lounge">
+                <div class="prompt-card">
+                    <span class="prompt-question">What bridges NASA fluid dynamics and Pixel Buds audio?</span>
+                    <p class="prompt-answer">At their core, both require an obsession with how invisible forces (air, sound, heat) interact with physical constraints. Whether I am analyzing vehicle purge systems or acoustic resonance in a chassis, the foundational physics and systems-thinking remain identical.</p>
+                </div>
+                <div class="prompt-card">
+                    <span class="prompt-question">Why does an engineer care so much about music?</span>
+                    <p class="prompt-answer">Engineering is often highly structured and mathematical. Music provides the creative, unstructured counterbalance. However, producing a great track and engineering a reliable product both rely on harmony, iteration, and fine-tuning small details until the overall system feels right.</p>
+                </div>
+                <div class="prompt-card">
+                    <span class="prompt-question">What is your design philosophy?</span>
+                    <p class="prompt-answer">Intuition, craft, and strategy. I believe the best engineering doesn't just work—it feels effortless to the end user. I strive to build systems that are as aesthetically thoughtful as they are technically sound.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        // --- Mobile / touch detection (used for perf tuning + tap-to-navigate) ---
+        const isMobileDevice = window.innerWidth <= 768 || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
+
+        // --- Loading & Clock ---
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loader = document.getElementById('loading-screen');
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 1000);
+            }, 800);
+        });
+
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('local-clock').innerText = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }, 1000);
+
+        // --- Audio Player Logic ---
+        const audioEl = document.getElementById('bg-audio');
+        const audioDeck = document.getElementById('audio-deck');
+        const playBtn = document.getElementById('play-btn');
+        const iconPlay = document.getElementById('icon-play');
+        const iconPause = document.getElementById('icon-pause');
+        const trackLabel = document.getElementById('track-label');
+        const trackName = document.getElementById('track-name');
+        const visBars = document.querySelectorAll('.visualizer-bar');
+        
+        let isPlaying = false;
+        let visInterval;
+
+        function toggleAudio() {
+            isPlaying = !isPlaying;
+            audioDeck.classList.toggle('playing', isPlaying);
+            if (isPlaying) {
+                if (audioEl.src && audioEl.src !== window.location.href) { audioEl.play().catch(e => console.log("Audio play prevented:", e)); }
+                playBtn.classList.add('playing');
+                iconPlay.style.display = 'none'; iconPause.style.display = 'block';
+                visInterval = setInterval(() => {
+                    visBars.forEach(bar => { bar.style.height = (4 + Math.random() * 12) + 'px'; });
+                }, 100);
+            } else {
+                audioEl.pause();
+                playBtn.classList.remove('playing');
+                iconPlay.style.display = 'block'; iconPause.style.display = 'none';
+                clearInterval(visInterval);
+                visBars.forEach(bar => bar.style.height = '4px');
+            }
+        }
+        
+        playBtn.addEventListener('click', toggleAudio);
+
+        // --- Mobile Hamburger Menu ---
+        // Now the sole navigation entry point on mobile, so it needs to reliably open/close.
+        const mobileMenuOpenBtn = document.getElementById('mobile-menu-open');
+        const mobileMenuCloseBtn = document.getElementById('mobile-menu-close');
+        const mobileNavMenu = document.getElementById('mobile-nav-menu');
+
+        function openMobileMenu() { mobileNavMenu.classList.add('active'); }
+        function closeMobileMenu() { mobileNavMenu.classList.remove('active'); }
+
+        mobileMenuOpenBtn.addEventListener('click', openMobileMenu);
+        mobileMenuCloseBtn.addEventListener('click', closeMobileMenu);
+
+        // --- Config & Navigation State ---
+        const REALMS = {
+            engineering: { target: { x: 0, y: 0, z: -70 }, uiId: 'engineering-scroll-container' },
+            music: { target: { x: 100, y: 0, z: -70 }, uiId: 'music-realm-ui' },
+            aboutme: { target: { x: 0, y: 0, z: -30 }, uiId: 'aboutme-container' }
+        };
+        let activeRealm = null;
+        let isTransitioning = false;
+        const homeScrollUI = document.getElementById('home-scroll-container');
+        const telemetryDock = document.getElementById('telemetry-dock');
+        let mouseX = 0; let mouseY = 0;
+        const orbitRings = []; 
+
+        // --- Theme Toggle Logic ---
+        const themeBtn = document.getElementById('theme-toggle');
+        const iconMoon = document.getElementById('icon-moon');
+        const iconSun = document.getElementById('icon-sun');
+        let isLightMode = true; // Started in light mode
+
+        themeBtn.addEventListener('click', () => {
+            isLightMode = !isLightMode;
+            document.body.classList.toggle('dark-mode');
+            
+            if (isLightMode) {
+                iconMoon.style.display = 'none'; iconSun.style.display = 'block';
+                scene.fog.color.setHex(0xf5f5f3); particlesMesh.material.color.setHex(0x1a1a1c);
+                planets.forEach(p => {
+                    if (p.data.id === 'engineering') { p.mesh.material.color.setHex(0x9b59b6); p.mesh.material.emissiveIntensity = 0.2; }
+                    if (p.data.id === 'music') { p.mesh.material.color.setHex(0xf4d03f); p.mesh.material.emissiveIntensity = 0.2; }
+                });
+                sunMat.color.setHex(0xff3b30); sunMat.emissive.setHex(0xff2fc7); sunLight.color.setHex(0xffd23f);
+                centerGlow.material.color.setHex(0xff2fc7); centerGlow.material.opacity = 0.4;
+                orbitRings.forEach(r => r.material.color.setHex(0x000000));
+            } else {
+                iconMoon.style.display = 'block'; iconSun.style.display = 'none';
+                scene.fog.color.setHex(0x000000); /* True black */
+                particlesMesh.material.color.setHex(0x555553);
+                planets.forEach(p => {
+                    if (p.data.id === 'engineering') { p.mesh.material.color.setHex(0xffb347); p.mesh.material.emissiveIntensity = 0.15; } /* Warm amber */
+                    if (p.data.id === 'music') { p.mesh.material.color.setHex(0xd88a3f); p.mesh.material.emissiveIntensity = 0.15; } /* Burnt orange */
+                });
+                sunMat.color.setHex(0xff8c00); sunMat.emissive.setHex(0xff7000); sunLight.color.setHex(0xffa040);
+                centerGlow.material.color.setHex(0xff8c00); centerGlow.material.opacity = 0.3;
+                orbitRings.forEach(r => r.material.color.setHex(0x3a2a1a));
+            }
+        });
+
+        const container = document.getElementById('webgl-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0xf5f5f3, 0.012); // Light fog default
+
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 45); 
+
+        const renderer = new THREE.WebGLRenderer({ antialias: !isMobileDevice, alpha: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileDevice ? 1.5 : 2));
+        container.appendChild(renderer.domElement);
+
+        const particleCount = isMobileDevice ? 500 : 1500;
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesPos = new Float32Array(particleCount * 3);
+        for(let i = 0; i < particleCount; i++) {
+            particlesPos[i*3] = (Math.random() - 0.5) * 150;
+            particlesPos[i*3+1] = (Math.random() - 0.5) * 150;
+            particlesPos[i*3+2] = (Math.random() - 0.5) * 150;
+        }
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(particlesPos, 3));
+        const particlesMesh = new THREE.Points(particlesGeometry, new THREE.PointsMaterial({ color: 0x1a1a1c, size: 0.08, transparent: true, opacity: 0.4 }));
+        scene.add(particlesMesh);
+
+        // ==========================================
+        // 1. SCENE: SOLAR SYSTEM (HOME)
+        // ==========================================
+        const solarSystemGroup = new THREE.Group();
+        solarSystemGroup.rotation.x = 0.8; 
+        scene.add(solarSystemGroup);
+
+        const sunMat = new THREE.MeshStandardMaterial({
+            color: 0xff3b30, emissive: 0xff2fc7, emissiveIntensity: 0.8,
+            roughness: 0.4, metalness: 0.1
+        });
+        const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(3, 64, 64), sunMat);
+        solarSystemGroup.add(sunMesh);
+
+        const centerGlow = new THREE.Mesh(new THREE.SphereGeometry(3.8, 32, 32), new THREE.MeshBasicMaterial({ color: 0xff2fc7, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, side: THREE.BackSide }));
+        solarSystemGroup.add(centerGlow);
+
+        const sunLight = new THREE.PointLight(0xffd23f, 2.5, 120);
+        solarSystemGroup.add(sunLight);
+        solarSystemGroup.add(new THREE.AmbientLight(0x222225, 1.5));
+
+        const planets = [];
+        const planetData = [
+            { name: 'Engineering', color: 0x9b59b6, radius: 1.2, distance: 12, speed: 0.003, id: 'engineering' }, // Changed to Purple
+            { name: 'Music', color: 0xf4d03f, radius: 1.0, distance: 18, speed: 0.002, id: 'music' } // Changed to Golden Yellow
+        ];
+
+        planetData.forEach((data) => {
+            const mat = new THREE.MeshStandardMaterial({ 
+                color: data.color, roughness: 0.7, metalness: 0.2,
+                emissive: 0xffffff, emissiveIntensity: 0.2
+            });
+            const mesh = new THREE.Mesh(new THREE.SphereGeometry(data.radius, 64, 64), mat);
+            
+            const ringMesh = new THREE.Mesh(new THREE.RingGeometry(data.distance - 0.02, data.distance + 0.02, 64), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, side: THREE.DoubleSide }));
+            ringMesh.rotation.x = Math.PI / 2; 
+            solarSystemGroup.add(ringMesh);
+            orbitRings.push(ringMesh);
+
+            const labelEl = document.createElement('div'); labelEl.className = 'planet-label'; labelEl.innerText = data.name;
+            document.getElementById('planet-labels-container').appendChild(labelEl);
+
+            solarSystemGroup.add(mesh);
+            planets.push({ mesh, data, angle: Math.random() * Math.PI * 2, labelEl: labelEl });
+        });
+
+        const sunLabelEl = document.createElement('div'); sunLabelEl.className = 'planet-label'; sunLabelEl.innerText = 'About';
+        document.getElementById('planet-labels-container').appendChild(sunLabelEl);
+        planets.push({ mesh: sunMesh, data: { name: 'About', radius: 3, distance: 0, speed: 0, id: 'aboutme' }, angle: 0, labelEl: sunLabelEl });
+
+        // Scroll parallax for home page and fading telemetry dock
+        ScrollTrigger.create({
+            trigger: ".contact-section", scroller: "#home-scroll-container", start: "top 100%", end: "top 0%", scrub: true,
+            onUpdate: (self) => { 
+                if (!activeRealm && !isTransitioning) { 
+                    solarSystemGroup.position.y = self.progress * 25; 
+                    solarSystemGroup.position.z = self.progress * -15; 
+                    // Fade out telemetry dock as user scrolls down to contact
+                    telemetryDock.style.opacity = 1 - (self.progress * 2);
+                } 
+            }
+        });
+
+
+        // ==========================================
+        // 2. ENGINEERING REALM (3D Animations)
+        // ==========================================
+        const engineeringGroup = new THREE.Group();
+        engineeringGroup.position.set(0, 0, -80); engineeringGroup.visible = false;
+        scene.add(engineeringGroup);
+        engineeringGroup.add(new THREE.AmbientLight(0xffffff, 0.8));
+        const engSpot = new THREE.SpotLight(0xd9aa75, 4); engSpot.position.set(10, 20, 10); engineeringGroup.add(engSpot);
+        
+        const engCore = new THREE.Mesh(new THREE.TorusKnotGeometry(4, 1.2, 150, 32), new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2, wireframe: true, transparent: true, opacity: 0.4 }));
+        engCore.position.set(6, 0, 0); engineeringGroup.add(engCore);
+
+        const nasaGroup = new THREE.Group(); nasaGroup.position.set(-6, -0.5, 0); engineeringGroup.add(nasaGroup);
+        const silhouetteMat = new THREE.MeshStandardMaterial({ color: 0x222225, roughness: 0.85, metalness: 0.1 });
+        const stackGroup = new THREE.Group(); nasaGroup.add(stackGroup);
+        stackGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.3, 1.2, 32), silhouetteMat).translateY(-1.4));
+        stackGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.0, 32), silhouetteMat).translateY(-0.3));
+        stackGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.5, 32), silhouetteMat).translateY(0.45));
+        stackGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.4, 0.4, 32), silhouetteMat).translateY(0.9));
+        stackGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.9, 12), silhouetteMat).translateY(1.55));
+        stackGroup.add(new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.15, 12), silhouetteMat).translateY(2.075));
+        
+        function nasaStackRadius(y) {
+            if (y < -0.8) { const f = (y - (-2)) / ((-0.8) - (-2)); return THREE.MathUtils.lerp(1.3, 0.5, THREE.MathUtils.clamp(f, 0, 1)); }
+            if (y < 0.2) return 0.45; if (y < 0.7) return 0.4;
+            if (y < 1.1) { const f = (y - 0.7) / (1.1 - 0.7); return THREE.MathUtils.lerp(0.4, 0.15, THREE.MathUtils.clamp(f, 0, 1)); }
+            return 0.05;
+        }
+
+        const airCount = isMobileDevice ? 150 : 400; const airGeo = new THREE.BufferGeometry();
+        const airPos = new Float32Array(airCount * 3); const airPhases = new Float32Array(airCount);
+        const airOffsets = new Float32Array(airCount); const airColors = new Float32Array(airCount * 3);
+        for(let i=0; i<airCount; i++) {
+            airPos[i*3] = 0; airPos[i*3+1] = -2 + Math.random() * 4; airPos[i*3+2] = 0;
+            airPhases[i] = Math.random() * Math.PI * 2; airOffsets[i] = 0.4 + Math.random() * 0.9; 
+            const mix = Math.random();
+            airColors[i*3] = THREE.MathUtils.lerp(0.65, 1.0, mix); airColors[i*3+1] = THREE.MathUtils.lerp(0.85, 1.0, mix); airColors[i*3+2] = 1.0;
+        }
+        airGeo.setAttribute('position', new THREE.BufferAttribute(airPos, 3));
+        airGeo.setAttribute('phase', new THREE.BufferAttribute(airPhases, 1));
+        airGeo.setAttribute('offset', new THREE.BufferAttribute(airOffsets, 1));
+        airGeo.setAttribute('color', new THREE.BufferAttribute(airColors, 3));
+        const airflow = new THREE.Points(airGeo, new THREE.PointsMaterial({ size: 0.1, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, vertexColors: true }));
+        nasaGroup.add(airflow);
+
+        const batteryGroup = new THREE.Group(); batteryGroup.position.set(6, 0, 0); engineeringGroup.add(batteryGroup);
+        const teslaLight = new THREE.PointLight(0xffffff, 0, 20); teslaLight.position.set(3, 3, 3); batteryGroup.add(teslaLight);
+        const battMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8, roughness: 0.3 });
+        batteryGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 4.5, 64), battMat));
+        const battGroove = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.2, 64), new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.6, roughness: 0.5 }));
+        battGroove.position.y = 2.25; batteryGroup.add(battGroove);
+        const battTopNode = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.1, 64), battMat);
+        battTopNode.position.y = 2.4; batteryGroup.add(battTopNode);
+        const elecRings = [];
+        for(let i=0; i<4; i++) {
+            const eRing = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.5, 16, 1, true), new THREE.MeshBasicMaterial({color: 0x2ecc71, wireframe: true, transparent: true, opacity: 0.6}));
+            eRing.position.y = (i - 1.5) * 1.0; batteryGroup.add(eRing); elecRings.push(eRing);
+        }
+
+        const earbudGroup = new THREE.Group(); earbudGroup.position.set(-6, 0, 0); engineeringGroup.add(earbudGroup);
+        const googLight = new THREE.PointLight(0xffffff, 0, 20); googLight.position.set(2, 2, 2); earbudGroup.add(googLight);
+        const blackMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9, metalness: 0.1 });
+        const budDome = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xe6e3d8, roughness: 0.8, metalness: 0.1 }));
+        budDome.rotation.x = Math.PI / 2; earbudGroup.add(budDome);
+        const budBody = new THREE.Mesh(new THREE.SphereGeometry(1.2, 32, 32), blackMat); budBody.position.set(0, 0, -0.6); budBody.scale.set(1, 1, 1.2); earbudGroup.add(budBody);
+        const budTip = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.0, 1.0, 32), blackMat); budTip.rotation.x = Math.PI / 2; budTip.position.set(0, -0.5, -1.5); earbudGroup.add(budTip);
+        const googleWaves = [];
+        for(let i=0; i<3; i++) {
+            const wave = new THREE.Mesh(new THREE.TorusGeometry(1.8, 0.03, 16, 64), new THREE.MeshBasicMaterial({color: 0xcccccc, transparent: true}));
+            wave.position.set(0, -0.5, -1.5); earbudGroup.add(wave); googleWaves.push({ mesh: wave, offset: i * 0.33 });
+        }
+        earbudGroup.rotation.set(-Math.PI / 8, Math.PI / 4, 0);
+
+        const coffeeBeanGroup = new THREE.Group(); coffeeBeanGroup.position.set(6, 0, 0); engineeringGroup.add(coffeeBeanGroup);
+        const geLight = new THREE.PointLight(0xd9aa75, 0, 20); geLight.position.set(0, 2, 2); coffeeBeanGroup.add(geLight);
+        const beanGeo = new THREE.SphereGeometry(1.0, 32, 32); beanGeo.scale(1, 1.4, 0.7);
+        const beanMat = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.8, metalness: 0.1 });
+        const creaseGeo = new THREE.TorusGeometry(0.9, 0.05, 16, 32, Math.PI); creaseGeo.scale(0.7, 1, 1);
+        const creaseMat = new THREE.MeshBasicMaterial({ color: 0x140a05 });
+        const beansList = [];
+        for(let i=0; i<20; i++) {
+            const singleBean = new THREE.Group();
+            const creaseM = new THREE.Mesh(creaseGeo, creaseMat); creaseM.rotation.z = Math.PI/2; creaseM.position.z = 0.65;
+            singleBean.add(new THREE.Mesh(beanGeo, beanMat), creaseM);
+            const tightPos = new THREE.Vector3((Math.random()-0.5)*3, (Math.random()-0.5)*3, (Math.random()-0.5)*3);
+            const scatterPos = new THREE.Vector3((Math.random()-0.5)*25, (Math.random()-0.5)*25, (Math.random()-0.5)*25);
+            singleBean.position.copy(scatterPos); singleBean.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0);
+            coffeeBeanGroup.add(singleBean); beansList.push({ mesh: singleBean, tight: tightPos, scatter: scatterPos });
+        }
+
+        const schoolCore = new THREE.Mesh(new THREE.IcosahedronGeometry(2.5, 1), new THREE.MeshStandardMaterial({ color: 0x8a8a88, wireframe: true }));
+        schoolCore.position.set(-6, 0, 0); engineeringGroup.add(schoolCore);
+
+        // Scroll logic for engineering models
+        function updateEngineeringScene(progress) {
+            const targetIndex = progress * 5; 
+            const timelineLine = document.getElementById('eng-timeline-line');
+            if (progress > 0.02 && progress < 0.98) { timelineLine.style.display = 'block'; } else { timelineLine.style.display = 'none'; }
+
+            const engObjects = [
+                { group: engCore, light: null, index: 0 }, { group: nasaGroup, light: null, index: 1 }, 
+                { group: batteryGroup, light: teslaLight, index: 2 }, { group: earbudGroup, light: googLight, index: 3 }, 
+                { group: coffeeBeanGroup, light: geLight, index: 4 }, { group: schoolCore, light: null, index: 5 }
+            ];
+
+            engObjects.forEach((obj) => {
+                const distance = Math.abs(targetIndex - obj.index);
+                if (distance < 1.0) {
+                    const scale = Math.max(0, 1 - Math.pow(distance, 2));
+                    obj.group.scale.set(scale, scale, scale); obj.group.visible = true;
+                    if(obj.light) obj.light.intensity = scale * 2;
+                } else {
+                    obj.group.scale.set(0, 0, 0); obj.group.visible = false;
+                    if(obj.light) obj.light.intensity = 0;
+                }
+            });
+
+            const geDist = Math.abs(targetIndex - 4);
+            if (geDist < 1.5) {
+                const explosionFactor = Math.max(0, Math.min(1, geDist)); 
+                beansList.forEach(b => { b.mesh.position.lerpVectors(b.tight, b.scatter, Math.pow(explosionFactor, 2)); });
+            }
+
+            engCore.rotation.y = progress * Math.PI * 2; engCore.rotation.x = progress * Math.PI;
+        }
+
+        ScrollTrigger.create({
+            trigger: "#eng-scroll-track", scroller: "#engineering-scroll-container", start: "top top", end: "bottom bottom", scrub: true,
+            onUpdate: (self) => updateEngineeringScene(self.progress)
+        });
+
+        // Modal Logic
+        const modal = document.getElementById('exp-modal');
+        function openModal(id) {
+            const sect = document.getElementById('eng-sec-' + id);
+            if(!sect) return;
+            
+            document.getElementById('modal-title').innerText = sect.querySelector('h2').innerText;
+            document.getElementById('modal-role').innerText = sect.querySelector('h3').innerText;
+            document.getElementById('modal-desc').innerText = sect.querySelector('.eng-desc').innerText;
+            
+            const techString = sect.querySelector('.tech-list').innerText;
+            const techListContainer = document.getElementById('modal-tech-list');
+            techListContainer.innerHTML = '';
+            techString.split(',').forEach(tech => {
+                let s = document.createElement('span'); s.innerText = tech.trim();
+                techListContainer.appendChild(s);
+            });
+            
+            modal.classList.add('active');
+        }
+        function closeModal() { modal.classList.remove('active'); }
+
+
+        // ==========================================
+        // 3. MUSIC REALM (3D Record Player)
+        // ==========================================
+        const musicGroup = new THREE.Group();
+        musicGroup.position.set(100, -2, -80); 
+        musicGroup.visible = false;
+        scene.add(musicGroup);
+        
+        musicGroup.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const musicSpot = new THREE.SpotLight(0xd9aa75, 4); 
+        musicSpot.position.set(-5, 15, 5); musicSpot.angle = Math.PI / 4;
+        musicGroup.add(musicSpot);
+
+        const recordPlayerGroup = new THREE.Group();
+        recordPlayerGroup.position.set(3, 0, 0); recordPlayerGroup.rotation.x = Math.PI / 8; recordPlayerGroup.rotation.y = -Math.PI / 6;
+        musicGroup.add(recordPlayerGroup);
+
+        const plinthMat = new THREE.MeshStandardMaterial({ color: 0x111112, roughness: 0.9, metalness: 0.1 });
+        recordPlayerGroup.add(new THREE.Mesh(new THREE.BoxGeometry(10, 0.8, 8), plinthMat));
+        
+        const platterMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.4 });
+        const platter = new THREE.Mesh(new THREE.CylinderGeometry(3.8, 3.8, 0.2, 64), platterMat);
+        platter.position.set(-0.5, 0.5, 0); recordPlayerGroup.add(platter);
+
+        const vinylGroup = new THREE.Group(); vinylGroup.position.set(-0.5, 0.61, 0); recordPlayerGroup.add(vinylGroup);
+        const vinylMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.2, metalness: 0.5 });
+        vinylGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(3.7, 3.7, 0.05, 64), vinylMat));
+        for(let i=0; i<5; i++) {
+            const groove = new THREE.Mesh(new THREE.RingGeometry(1.5 + (i*0.4), 1.51 + (i*0.4), 64), new THREE.MeshBasicMaterial({color: 0x1a1a1a, side: THREE.DoubleSide}));
+            groove.rotation.x = Math.PI / 2; groove.position.y = 0.03; vinylGroup.add(groove);
+        }
+
+        const vinylLabelMat = new THREE.MeshBasicMaterial({ color: 0xd9aa75 }); 
+        vinylGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.06, 32), vinylLabelMat));
+        const centerPin = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.2, 16), new THREE.MeshStandardMaterial({color: 0x888888, metalness: 1}));
+        centerPin.position.y = 0.05; vinylGroup.add(centerPin);
+
+        const tonearmGroup = new THREE.Group(); tonearmGroup.position.set(3.5, 0.8, -2.5); recordPlayerGroup.add(tonearmGroup);
+        tonearmGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 0.4, 32), platterMat));
+        const tonearmPivot = new THREE.Group(); tonearmPivot.position.y = 0.4; tonearmGroup.add(tonearmPivot);
+        const counterweight = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.6, 16), platterMat);
+        counterweight.rotation.x = Math.PI / 2; counterweight.position.set(0, 0, 0.4); tonearmPivot.add(counterweight);
+        const armGeo = new THREE.CylinderGeometry(0.06, 0.06, 4.5, 16); armGeo.translate(0, 2.25, 0); 
+        const arm = new THREE.Mesh(armGeo, new THREE.MeshStandardMaterial({color: 0xaaaaaa, metalness: 0.9, roughness: 0.2}));
+        arm.rotation.x = -Math.PI / 2; tonearmPivot.add(arm);
+        const headshell = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.6), new THREE.MeshStandardMaterial({color: 0x111111}));
+        headshell.position.set(0, 0, -4.5); headshell.rotation.y = Math.PI / 8; tonearmPivot.add(headshell);
+
+        const textureLoader = new THREE.TextureLoader();
+        const vinylData = [
+            // 🎧 ADD MP3 LINKS HERE for specific songs. e.g. audio: "music/track1.mp3"
+            { artist: "Harry Styles", track: "As It Was", cover: "https://placehold.co/400x400/ea8f99/fff?text=Harry+Styles", audio: "" },
+            { artist: "Erykah Badu", track: "Butter", cover: "https://placehold.co/400x400/e6c935/000?text=BTS", audio: "" },
+            { artist: "Adele", track: "Easy On Me", cover: "https://placehold.co/400x400/3d5849/fff?text=Adele", audio: "" },
+            { artist: "Ariana Grande", track: "Positions", cover: "https://placehold.co/400x400/a3ccad/fff?text=Ariana", audio: "" },
+            { artist: "Frank Ocean", track: "Pink + White", cover: "https://placehold.co/400x400/e8e8e8/333?text=Blond", audio: "" },
+            { artist: "Sabrina Carpenter", track: "Espresso", cover: "https://placehold.co/400x400/8db4d9/fff?text=Sabrina", audio: "" },
+            { artist: "Daft Punk", track: "Get Lucky", cover: "https://placehold.co/400x400/000000/fff?text=Daft+Punk", audio: "" },
+            { artist: "Nujabes", track: "Aruarian Dance", cover: "https://placehold.co/400x400/a26c48/fff?text=Nujabes", audio: "" }
+        ];
+
+        const vinylGrid = document.getElementById('vinyl-grid');
+        vinylData.forEach((album, index) => {
+            const item = document.createElement('div');
+            item.className = 'vinyl-item';
+            
+            item.innerHTML = `
+                <div class="vinyl-art-wrapper">
+                    <img src="${album.cover}" class="vinyl-sleeve" alt="${album.artist}">
+                    <div class="vinyl-disc"></div>
+                </div>
+                <div class="vinyl-info">
+                    <span class="vinyl-artist">${album.artist}</span>
+                    <span class="vinyl-track">${album.track}</span>
+                </div>
+            `;
+            
+            item.addEventListener('click', () => {
+                // 1. Update Global Audio Deck UI
+                trackLabel.innerText = "NOW PLAYING";
+                trackName.innerText = album.track;
+                
+                // 2. Play Audio
+                audioEl.src = album.audio; 
+                if (!isPlaying) toggleAudio(); else audioEl.play().catch(e => console.log(e));
+                textureLoader.load(album.cover, (tex) => { vinylLabelMat.map = tex; vinylLabelMat.color.setHex(0xffffff); vinylLabelMat.needsUpdate = true; });
+                gsap.killTweensOf(tonearmPivot.rotation);
+                gsap.to(tonearmPivot.rotation, { y: 0.45, duration: 1.5, ease: "power2.out" });
+            });
+            vinylGrid.appendChild(item);
+        });
+
+        const mouse = new THREE.Vector2(-999, -999);
+        const raycaster = new THREE.Raycaster();
+        let hoveredPlanet = null;
+        const planetVec = new THREE.Vector3(); 
+
+        window.addEventListener('mousemove', (e) => {
+            if (isTransitioning) return;
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1; mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            mouseX = mouse.x; mouseY = mouse.y;
+        });
+
+        window.addEventListener('click', () => {
+            if (hoveredPlanet && !isTransitioning && !activeRealm && homeScrollUI.scrollTop < window.innerHeight * 0.3) {
+                triggerRealmDive(hoveredPlanet.data.id);
+            }
+        });
+
+        // --- Touch support ---
+        // Mouse-based hover never fires on touch devices, so the desktop click handler
+        // above (which depends on `hoveredPlanet` being set by mousemove) silently does
+        // nothing on phones/tablets. This does its own raycast at the moment of tap,
+        // and ignores touches that were actually a scroll/swipe rather than a tap.
+        let touchStartPos = null;
+        const TAP_MOVE_THRESHOLD = 12; // px of finger movement allowed before it counts as a scroll, not a tap
+
+        window.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+            touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }, { passive: true });
+
+        window.addEventListener('touchend', (e) => {
+            if (!touchStartPos || isTransitioning || activeRealm) { touchStartPos = null; return; }
+            if (homeScrollUI.scrollTop >= window.innerHeight * 0.3) { touchStartPos = null; return; }
+
+            const touch = e.changedTouches[0];
+            const dx = touch.clientX - touchStartPos.x;
+            const dy = touch.clientY - touchStartPos.y;
+            touchStartPos = null;
+            if (Math.hypot(dx, dy) > TAP_MOVE_THRESHOLD) return; // was a swipe/scroll, not a tap
+
+            const tapMouse = new THREE.Vector2(
+                (touch.clientX / window.innerWidth) * 2 - 1,
+                -(touch.clientY / window.innerHeight) * 2 + 1
+            );
+            raycaster.setFromCamera(tapMouse, camera);
+            const intersects = raycaster.intersectObjects(planets.map(p => p.mesh));
+            if (intersects.length > 0) {
+                const tapped = planets.find(p => p.mesh === intersects[0].object);
+                if (tapped) triggerRealmDive(tapped.data.id);
+            }
+        }, { passive: true });
+
+        function updateNavHighlight(realmId) {
+            document.querySelectorAll('.nav-links a').forEach(el => el.classList.remove('active'));
+            if(realmId) {
+                const activeLink = document.getElementById(`nav-${realmId}`);
+                if(activeLink) activeLink.classList.add('active');
+            }
+        }
+
+        const realmGroups = { engineering: engineeringGroup };
+
+        function triggerRealmDive(realmId) {
+            if (isTransitioning || activeRealm === realmId) return;
+            isTransitioning = true;
+            document.getElementById('top-brand').classList.add('visible');
+            telemetryDock.style.opacity = '0'; // Hide telemetry globally while in realms
+            updateNavHighlight(realmId);
+
+            const config = REALMS[realmId];
+            const targetUI = document.getElementById(config.uiId);
+            const planetInfo = planets.find(p => p.data.id === realmId);
+            const targetPos = new THREE.Vector3();
+            planetInfo.mesh.getWorldPosition(targetPos);
+
+            if (activeRealm !== null) {
+                const prevConfig = REALMS[activeRealm];
+                const prevUI = document.getElementById(prevConfig.uiId);
+                
+                gsap.to(prevUI, { opacity: 0, duration: 0.5, onComplete: () => { 
+                    prevUI.style.display = 'none'; 
+                    if (realmGroups[activeRealm]) realmGroups[activeRealm].visible = false;
+                    
+                    activeRealm = realmId;
+                    if (realmGroups[realmId]) realmGroups[realmId].visible = true;
+                    camera.position.set(config.target.x, config.target.y, config.target.z + 10);
+                    
+                    targetUI.style.display = 'block';
+                    if (realmId === 'engineering') { targetUI.scrollTop = 0; updateEngineeringScene(0); ScrollTrigger.refresh(); } 
+                    else if (realmId === 'aboutme') { targetUI.scrollTop = 0; }
+                    
+                    gsap.to(targetUI, { opacity: 1, duration: 1 });
+                    gsap.to(camera.position, { z: config.target.z, duration: 1.2, ease: "power2.out", onComplete: () => isTransitioning = false });
+                }});
+                return;
+            }
+
+            activeRealm = realmId;
+            document.body.style.cursor = 'default'; homeScrollUI.style.cursor = 'default';
+
+            gsap.to(homeScrollUI, { opacity: 0, duration: 0.5 });
+            homeScrollUI.style.pointerEvents = 'none';
+
+            const tl = gsap.timeline({
+                onComplete: () => {
+                    isTransitioning = false; targetUI.style.display = 'block';
+                    if (realmId === 'engineering') { targetUI.scrollTop = 0; updateEngineeringScene(0); ScrollTrigger.refresh(); } 
+                    else if (realmId === 'aboutme') { targetUI.scrollTop = 0; }
+                    gsap.to(targetUI, { opacity: 1, duration: 1 });
+                }
+            });
+
+            tl.to(camera.position, { x: targetPos.x, y: targetPos.y, z: targetPos.z, duration: 1.5, ease: "power2.inOut" });
+            tl.add(() => {
+                solarSystemGroup.visible = false;
+                if (realmGroups[realmId]) realmGroups[realmId].visible = true;
+                camera.position.set(config.target.x, config.target.y, config.target.z + 10);
+            });
+            tl.to(camera.position, { z: config.target.z, duration: 1.2, ease: "power2.out" });
+        }
+
+        function returnToOrbit() {
+            if(isTransitioning || !activeRealm) return;
+            isTransitioning = true;
+            document.getElementById('top-brand').classList.remove('visible');
+            updateNavHighlight(null);
+
+            const config = REALMS[activeRealm];
+            const activeUI = document.getElementById(config.uiId);
+            const planetInfo = planets.find(p => p.data.id === activeRealm);
+            const targetPos = new THREE.Vector3();
+            planetInfo.mesh.getWorldPosition(targetPos);
+
+            gsap.to([activeUI], {
+                opacity: 0, duration: 0.5, onComplete: () => {
+                    activeUI.style.display = 'none'; 
+                    if(activeUI.scrollTop !== undefined) activeUI.scrollTop = 0;
+                    if(activeRealm === 'music') { gsap.to(tonearmPivot.rotation, { y: 0, duration: 1, ease: "power2.inOut" }); }
+                }
+            });
+
+            const tl = gsap.timeline({
+                onComplete: () => {
+                    isTransitioning = false; activeRealm = null;
+                    homeScrollUI.style.pointerEvents = 'auto'; gsap.to(homeScrollUI, { opacity: 1, duration: 1 });
+                    telemetryDock.style.opacity = '1'; // Bring telemetry back on home page
+                }
+            });
+
+            tl.to(camera.position, { z: config.target.z + 10, duration: 1, ease: "power2.in" });
+            tl.add(() => {
+                solarSystemGroup.visible = true;
+                if (realmGroups[activeRealm]) realmGroups[activeRealm].visible = false;
+                camera.position.copy(targetPos);
+            });
+            tl.to(camera.position, { x: 0, y: 0, z: 45, duration: 1.5, ease: "power2.out" });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = Date.now() * 0.001;
+
+            particlesMesh.rotation.y += 0.0005; particlesMesh.rotation.x += 0.0002;
+
+            if (activeRealm === 'engineering' || isTransitioning) {
+                engineeringGroup.rotation.y = Math.sin(t * 0.5) * 0.05 + mouseX * 0.05;
+                engineeringGroup.rotation.x = Math.cos(t * 0.5) * 0.05 + mouseY * 0.05;
+                
+                engCore.rotation.y = t * 0.3; engCore.rotation.x = t * 0.2;
+                schoolCore.rotation.y = -t * 0.3; schoolCore.rotation.x = t * 0.2;
+                
+                coffeeBeanGroup.rotation.y += 0.005; coffeeBeanGroup.position.y = Math.sin(t * 2) * 0.3; 
+                beansList.forEach(b => { b.mesh.rotation.x += 0.01; b.mesh.rotation.y += 0.015; });
+
+                earbudGroup.rotation.y -= 0.005;
+                googleWaves.forEach(w => {
+                    let phase = (t + w.offset) % 1;
+                    w.mesh.scale.setScalar(1 + phase * 1.5); w.mesh.material.opacity = (1 - phase) * 0.6;
+                });
+
+                batteryGroup.rotation.y += 0.01;
+                elecRings.forEach((r, i) => { r.rotation.y += 0.05 + (i*0.01); r.scale.setScalar(1 + Math.random() * 0.04); });
+
+                if (nasaGroup.visible) {
+                    const positions = airflow.geometry.attributes.position.array;
+                    const phases = airflow.geometry.attributes.phase.array;
+                    const offsets = airflow.geometry.attributes.offset.array;
+                    for (let i = 0; i < airCount; i++) {
+                        let y = positions[i*3+1]; y += 0.02; 
+                        if (y > 2) { y = -2; offsets[i] = 0.4 + Math.random() * 0.9; phases[i] = Math.random() * Math.PI * 2; }
+                        positions[i*3+1] = y;
+                        const progress = (y + 2) / 4; const settle = Math.pow(1 - progress, 1.6);
+                        const r = nasaStackRadius(y) + offsets[i] * settle; const angle = t * 1.6 + phases[i];
+                        positions[i*3] = Math.cos(angle) * r; positions[i*3+2] = Math.sin(angle) * r;
+                    }
+                    airflow.geometry.attributes.position.needsUpdate = true;
+                    airflow.material.opacity = 0.25 + Math.abs(Math.sin(t * 1.5)) * 0.55; 
+                }
+            }
+            
+            if (activeRealm === 'music' && isPlaying) { vinylGroup.rotation.y += 0.02; } 
+            else if (activeRealm === 'music' && !isPlaying) { gsap.to(tonearmPivot.rotation, { y: 0, duration: 1, ease: "power2.out", overwrite: "auto" }); }
+
+            if (!activeRealm && !isTransitioning && homeScrollUI.scrollTop < window.innerHeight * 0.3) {
+                planets.forEach(p => {
+                    if (p.data.id !== 'aboutme') {
+                        p.angle += p.data.speed;
+                        p.mesh.position.x = Math.cos(p.angle) * p.data.distance; p.mesh.position.z = Math.sin(p.angle) * p.data.distance;
+                        p.mesh.rotation.y += 0.01;
+                    }
+                    p.mesh.getWorldPosition(planetVec); planetVec.y += p.data.radius + 1.2; planetVec.project(camera);
+                    const x = (planetVec.x * .5 + .5) * window.innerWidth; const y = (planetVec.y * -.5 + .5) * window.innerHeight;
+                    
+                    if (planetVec.z < 1) { p.labelEl.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`; p.labelEl.style.opacity = '1'; } 
+                    else { p.labelEl.style.opacity = '0'; }
+                });
+
+                let intersects = [];
+                if (!isMobileDevice) {
+                    raycaster.setFromCamera(mouse, camera);
+                    intersects = raycaster.intersectObjects(planets.map(p => p.mesh));
+                }
+
+                if (intersects.length > 0) {
+                    const intersectedMesh = intersects[0].object;
+                    if (!hoveredPlanet || hoveredPlanet.mesh !== intersectedMesh) {
+                        if (hoveredPlanet) {
+                            gsap.to(hoveredPlanet.mesh.scale, {x:1, y:1, z:1, duration: 0.3});
+                            if (hoveredPlanet.data.id !== 'aboutme') gsap.to(hoveredPlanet.mesh.material.emissive, {intensity: isLightMode ? 0.2 : 0.02, duration: 0.3});
+                        }
+                        hoveredPlanet = planets.find(p => p.mesh === intersectedMesh);
+                        document.body.style.cursor = 'pointer'; homeScrollUI.style.cursor = 'pointer';
+                        
+                        gsap.to(hoveredPlanet.mesh.scale, {x:1.15, y:1.15, z:1.15, duration: 0.3});
+                        if (hoveredPlanet.data.id !== 'aboutme') gsap.to(hoveredPlanet.mesh.material.emissive, {intensity: 0.4, duration: 0.3});
+                    }
+                } else if (hoveredPlanet) {
+                    gsap.to(hoveredPlanet.mesh.scale, {x:1, y:1, z:1, duration: 0.3});
+                    if (hoveredPlanet.data.id !== 'aboutme') gsap.to(hoveredPlanet.mesh.material.emissive, {intensity: isLightMode ? 0.2 : 0.02, duration: 0.3});
+                    hoveredPlanet = null; document.body.style.cursor = 'default'; homeScrollUI.style.cursor = 'default';
+                }
+            } else {
+                if (hoveredPlanet) { 
+                    hoveredPlanet.mesh.scale.set(1, 1, 1); 
+                    if (hoveredPlanet.data.id !== 'aboutme') hoveredPlanet.mesh.material.emissiveIntensity = isLightMode ? 0.2 : 0.02;
+                    hoveredPlanet = null; 
+                }
+                document.body.style.cursor = 'default'; homeScrollUI.style.cursor = 'default';
+
+                planets.forEach(p => {
+                    p.labelEl.style.opacity = '0'; 
+                    if(!activeRealm && !isTransitioning && p.data.id !== 'aboutme') {
+                        p.angle += p.data.speed; p.mesh.position.x = Math.cos(p.angle) * p.data.distance; p.mesh.position.z = Math.sin(p.angle) * p.data.distance;
+                        p.mesh.rotation.y += 0.01;
+                    }
+                });
+            }
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
