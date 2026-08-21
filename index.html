@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-    <title>Dena Attar — Engineer, Builder, Explorer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Dena Attar </title>
+    <link rel="icon" type="image/x-icon" href="images/dino_icon.png" />
+    <!-- <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://w3.org viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦕</text></svg>"> -->
+
     <meta name="description" content="Dena Attar is a curious engineer who explores the intersection of physical technology, digital systems, creativity, and human experience.">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -48,6 +51,7 @@
             overscroll-behavior: none;
             -webkit-font-smoothing: antialiased;
             transition: background-color 0.5s ease, color 0.5s ease;
+            touch-action: manipulation; /* disables double-tap-to-zoom, keeps normal single-finger scroll/tap */
         }
 
         ::selection {
@@ -114,6 +118,32 @@
         .visualizer { display: flex; align-items: center; gap: 3px; height: 16px; margin-left: 4px; }
         .visualizer-bar { width: 4px; height: 4px; background: var(--accent-warm); border-radius: 2px; transition: height 0.1s ease; }
 
+        .mobile-menu-btn {
+            display: none; background: transparent; cursor: pointer;
+            width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--glass-border);
+            justify-content: center; align-items: center; color: var(--text-main); flex-shrink: 0;
+        }
+        .mobile-menu-btn svg { width: 18px; height: 18px; }
+
+        .mobile-nav-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark); z-index: 200;
+            display: none; flex-direction: column; align-items: center; justify-content: center; gap: 32px;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .mobile-nav-overlay.active { display: flex; opacity: 1; pointer-events: auto; }
+        .mobile-nav-overlay a {
+            font-family: var(--font-sans); font-size: 1.8rem; font-weight: 600;
+            color: var(--text-main); text-decoration: none; transition: color 0.3s ease;
+        }
+        .mobile-nav-overlay a:active { color: var(--accent-warm); }
+        .mobile-close-btn {
+            position: absolute; top: 24px; right: 24px; background: transparent; cursor: pointer;
+            width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--glass-border);
+            display: flex; justify-content: center; align-items: center; color: var(--text-main);
+        }
+        .mobile-close-btn svg { width: 18px; height: 18px; }
+
         .nav-links {
             pointer-events: auto; display: flex; gap: 24px;
             background: var(--glass-bg); border: 1px solid var(--glass-border);
@@ -150,6 +180,7 @@
         #home-scroll-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             overflow-y: auto; overflow-x: hidden; z-index: 5; scrollbar-width: none; 
+            -webkit-overflow-scrolling: touch;
         }
         #home-scroll-container::-webkit-scrollbar { display: none; } 
 
@@ -213,6 +244,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             overflow-y: auto; overflow-x: hidden; z-index: 10; pointer-events: auto;
             display: none; opacity: 0; scrollbar-width: none; scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
         }
         .realm-container::-webkit-scrollbar { display: none; }
 
@@ -395,11 +427,51 @@
             .huge-title { font-size: 4rem; }
             .hero-intro { font-size: 1.4rem; padding: 0 20px; }
             .hero-skills { padding: 0 20px; line-height: 1.6; }
-            .eng-section { width: 85%; }
-            .eng-section.left-align, .eng-section.right-align { left: 7.5%; }
             .obs-status { display: none; }
             .bb-grid { grid-template-columns: 1fr; }
             .nav-links { display: none; }
+            .mobile-menu-btn { display: flex; }
+            .header-right { gap: 10px; }
+            /* Collapse the audio deck to just the play button so it sits comfortably next to the menu toggle */
+            .audio-deck { padding: 6px; gap: 0; overflow: hidden; transition: padding 0.3s ease, gap 0.3s ease; }
+            .audio-deck .track-info { display: none; }
+            .audio-deck .visualizer { display: none; }
+            .audio-deck.playing { padding: 6px 14px 6px 6px; gap: 10px; }
+            .audio-deck.playing .visualizer { display: flex; }
+
+            /* --- Field Log (Work) timeline, mobile ---
+               Desktop pins each card to a fixed vh offset so the scroll position drives a
+               background 3D scrub effect. On mobile that math doesn't account for real content
+               height, so cards overlap. This switches to a normal stacked flow instead — each
+               card takes exactly the height it needs, so overlap is no longer possible. */
+            #engineering-scroll-container { padding: 100px 24px 80px 46px; box-sizing: border-box; }
+            #eng-scroll-track { display: none; } /* was only a scroll-length spacer for the desktop scrub effect */
+
+            #eng-sec-intro, #eng-sec-nasa, #eng-sec-tesla, #eng-sec-google, #eng-sec-ge, #eng-sec-school {
+                position: relative; top: auto; left: auto; width: auto; height: auto;
+            }
+            .eng-section { display: block; margin-bottom: 28px; }
+            .eng-section::before {
+                content: ''; position: absolute; left: -32px; top: 30px;
+                width: 14px; height: 14px; border-radius: 50%;
+                background: var(--bg-dark); border: 3px solid var(--accent-warm); z-index: 3;
+            }
+            .eng-timeline-line { display: block !important; left: 24px; z-index: 2; }
+
+            .eng-card { padding: 1.5rem; }
+            .eng-tag { font-size: 0.65rem; margin-bottom: 12px; }
+            .exp-header { gap: 14px; }
+            .exp-logo { width: 48px; height: 48px; }
+            .exp-header h2 { font-size: 1.6rem; }
+            .exp-header h3 { font-size: 0.85rem; }
+            .eng-desc { font-size: 0.9rem; margin: 14px 0; }
+            .tech-list-display span { font-size: 0.7rem; padding: 3px 10px; }
+
+            /* "Let's connect" footer section: 3 squeezed columns were cutting off "Availability" */
+            .contact-section { padding: 12vw 6vw 8vw 6vw; }
+            .contact-header { margin-bottom: 6vh; }
+            .contact-grid { grid-template-columns: 1fr; gap: 32px; }
+            .site-footer { flex-direction: column; align-items: flex-start; gap: 12px; }
         }
     </style>
 </head>
@@ -443,8 +515,23 @@
                     <div class="visualizer-bar"></div><div class="visualizer-bar"></div><div class="visualizer-bar"></div><div class="visualizer-bar"></div><div class="visualizer-bar"></div>
                 </div>
             </div>
+
+            <!-- Mobile-only menu toggle, sits right next to the sound button -->
+            <button class="mobile-menu-btn" id="mobile-menu-open" aria-label="Open menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
         </div>
     </nav>
+
+    <!-- Mobile Nav Overlay: reuses the same triggerRealmDive() calls as the desktop nav-links -->
+    <div class="mobile-nav-overlay" id="mobile-nav-menu">
+        <button class="mobile-close-btn" id="mobile-menu-close" aria-label="Close menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <a href="javascript:void(0)" onclick="triggerRealmDive('engineering'); closeMobileMenu();">Work</a>
+        <a href="javascript:void(0)" onclick="triggerRealmDive('music'); closeMobileMenu();">Studio</a>
+        <a href="javascript:void(0)" onclick="triggerRealmDive('aboutme'); closeMobileMenu();">About Me</a>
+    </div>
 
     <!-- Shortcut Navigation for Field Logs -->
     <div class="field-log-nav" id="field-log-nav">
@@ -479,25 +566,25 @@
             <div class="contact-grid">
                 <div class="contact-col">
                     <span>Contact</span>
-                    <a href="mailto:hello@denaattar.com">hello@denaattar.com</a>
+                    <a href="mailto:attardena9@gmail.com">attardena9@gmail.com</a>
                 </div>
                 <div class="contact-col">
                     <span>Socials</span>
-                    <a href="#" target="_blank" rel="noopener">LinkedIn</a>
-                    <a href="#" target="_blank" rel="noopener">Instagram</a>
+                    <a href="https://www.linkedin.com/in/dena-attar-18b5051b2" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                    <!-- <a href="https://www.instagram.com/denaattar" target="_blank" rel="noopener noreferrer">Instagram</a> -->
                 </div>
                 <div class="contact-col">
                     <span>Availability</span>
-                    <p>Open for full-time roles & freelance collaborations.</p>
+                    <p>Open for freelance collaborations, looking forward to building something together.</p>
                 </div>
             </div>
             
             <footer class="site-footer">
                 <span class="site-footer-meta">© Dena Attar, 2026</span>
                 <nav class="site-footer-links">
-                    <a href="#">LinkedIn</a>
+                    <a href="https://www.linkedin.com/in/dena-attar-18b5051b2" target="_blank" rel="noopener noreferrer">LinkedIn</a>
                     <span class="site-footer-sep">·</span>
-                    <a href="#">Instagram</a>
+                    <!-- <a href="https://www.instagram.com/denaattar" target="_blank" rel="noopener noreferrer">Instagram</a> -->
                 </nav>
             </footer>
         </div>
@@ -752,6 +839,11 @@
         gsap.registerPlugin(ScrollTrigger);
         const isMobileDevice = window.innerWidth <= 768 || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
 
+        // iOS Safari sometimes ignores maximum-scale/user-scalable in the viewport meta tag,
+        // so this blocks the native pinch-zoom gesture directly as a safety net.
+        document.addEventListener('gesturestart', (e) => e.preventDefault());
+        document.addEventListener('gesturechange', (e) => e.preventDefault());
+
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const loader = document.getElementById('loading-screen');
@@ -794,6 +886,22 @@
             }
         }
         playBtn.addEventListener('click', toggleAudio);
+
+        // Mobile Hamburger Menu
+        const mobileMenuOpenBtn = document.getElementById('mobile-menu-open');
+        const mobileMenuCloseBtn = document.getElementById('mobile-menu-close');
+        const mobileNavMenu = document.getElementById('mobile-nav-menu');
+        function openMobileMenu() {
+            mobileNavMenu.style.display = 'flex';
+            void mobileNavMenu.offsetWidth; // force a reflow so the opacity transition below actually plays
+            mobileNavMenu.classList.add('active');
+        }
+        function closeMobileMenu() {
+            mobileNavMenu.classList.remove('active');
+            setTimeout(() => { mobileNavMenu.style.display = 'none'; }, 300); // matches the CSS opacity transition duration
+        }
+        mobileMenuOpenBtn.addEventListener('click', openMobileMenu);
+        mobileMenuCloseBtn.addEventListener('click', closeMobileMenu);
 
         // Shortcut Logic
         function jumpToLog(index) {
@@ -934,7 +1042,9 @@
             engCore.rotation.y = progress * Math.PI * 2; engCore.rotation.x = progress * Math.PI;
         }
 
-        ScrollTrigger.create({ trigger: "#eng-scroll-track", scroller: "#engineering-scroll-container", start: "top top", end: "bottom bottom", scrub: true, onUpdate: (self) => updateEngineeringScene(self.progress) });
+        if (!isMobileDevice) {
+            ScrollTrigger.create({ trigger: "#eng-scroll-track", scroller: "#engineering-scroll-container", start: "top top", end: "bottom bottom", scrub: true, onUpdate: (self) => updateEngineeringScene(self.progress) });
+        }
 
         // MODAL LOGIC WITH PHOTOS INJECTION
         const modal = document.getElementById('exp-modal');
